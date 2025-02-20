@@ -777,6 +777,9 @@ video {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
+.text-foreground {
+  color: var(--foreground);
+}
 .underline-offset-4 {
   text-underline-offset: 4px;
 }

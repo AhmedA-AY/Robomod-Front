@@ -28,11 +28,15 @@ export default function AIChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
-      <Card className="flex-1 overflow-hidden">
+      <Card className="flex-1 overflow-hidden bg-background">
         <CardContent className="h-full overflow-y-auto p-4">
           {messages.map((msg, index) => (
             <div key={index} className={`mb-4 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block p-2 rounded-lg ${msg.sender === 'user' ? 'bg-primary text-white' : 'bg-secondary text-primary'}`}>
+              <span className={`inline-block p-2 rounded-lg ${
+                msg.sender === 'user' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-secondary text-secondary-foreground'
+              }`}>
                 {msg.text}
               </span>
             </div>
@@ -45,10 +49,10 @@ export default function AIChatInterface() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow"
+            className="flex-grow bg-background text-foreground"
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           />
-          <Button onClick={handleSend} className="bg-primary text-white hover:bg-primary/90">Send</Button>
+          <Button onClick={handleSend}>Send</Button>
         </div>
       </CardFooter>
     </div>

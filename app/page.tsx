@@ -37,7 +37,7 @@ export default function Home() {
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-              className="w-full justify-start"
+              className="w-full justify-start text-foreground"
               onClick={() => {
                 setActiveTab(tab.id)
                 if (window.innerWidth < 768) {
@@ -60,10 +60,10 @@ export default function Home() {
           </Button>
           <h2 className="text-2xl font-bold text-primary">{tabs.find(tab => tab.id === activeTab)?.label}</h2>
         </header>
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="flex-1 p-8 overflow-auto bg-background">
           {activeTab === 'ai' && <AIChatInterface />}
           {activeTab !== 'ai' && (
-            <div>
+            <div className="text-foreground">
               <p>Content for {tabs.find(tab => tab.id === activeTab)?.label} goes here.</p>
             </div>
           )}
