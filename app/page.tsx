@@ -26,9 +26,9 @@ export default function Home() {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <div className={`bg-white shadow-md transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
+      <div className={`bg-background shadow-md transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
         <div className="p-4">
           <h1 className="text-2xl font-bold text-primary">Robomod</h1>
         </div>
@@ -54,7 +54,7 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow-md p-4 flex items-center">
+        <header className="bg-background shadow-md p-4 flex items-center">
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden mr-2">
             <Menu className="h-6 w-6" />
           </Button>
