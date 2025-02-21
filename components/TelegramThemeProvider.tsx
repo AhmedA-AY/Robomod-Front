@@ -6,12 +6,15 @@ export default function TelegramThemeProvider() {
   useEffect(() => {
     if (window?.Telegram?.WebApp?.themeParams) {
       const theme = window.Telegram.WebApp.themeParams
+      // Set background color to secondary_bg_color if available, otherwise fallback to bg_color
+      const backgroundColor = theme.secondary_bg_color || theme.bg_color
+      
       // Set background and text colors
-      document.documentElement.style.setProperty('--background', theme.bg_color)
+      document.documentElement.style.setProperty('--background', backgroundColor)
       document.documentElement.style.setProperty('--foreground', theme.text_color)
-      document.documentElement.style.setProperty('--card', theme.bg_color)
+      document.documentElement.style.setProperty('--card', backgroundColor)
       document.documentElement.style.setProperty('--card-foreground', theme.text_color)
-      document.documentElement.style.setProperty('--popover', theme.bg_color)
+      document.documentElement.style.setProperty('--popover', backgroundColor)
       document.documentElement.style.setProperty('--popover-foreground', theme.text_color)
       
       // Use the Telegram button colors for primary UI elements
