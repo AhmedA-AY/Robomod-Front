@@ -38,7 +38,7 @@ export default function Home() {
               key={tab.id}
               variant={activeTab === tab.id ? 'secondary' : 'ghost'}
               className={`w-full justify-start text-foreground/80 hover:text-foreground ${
-                activeTab === tab.id ? 'bg-background/50 text-foreground' : ''
+                activeTab === tab.id ? 'bg-secondary/50 text-foreground' : ''
               }`}
               onClick={() => {
                 setActiveTab(tab.id)
@@ -56,26 +56,33 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-background">
-        <header className="border-b border-input/10 p-6 flex items-center gap-4 bg-background">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar} 
-            className="md:hidden hover:bg-background/50"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            {tabs.find(tab => tab.id === activeTab)?.icon}
-            <h2 className="text-xl font-semibold text-foreground/90">
-              {tabs.find(tab => tab.id === activeTab)?.label}
-            </h2>
+        <header className="border-b border-input/10 p-6 flex items-center justify-between bg-background">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleSidebar} 
+              className="md:hidden hover:bg-secondary/50"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <h1 className={`text-xl font-bold text-primary tracking-tight ${!isSidebarOpen ? 'md:hidden' : 'hidden'}`}>
+                Robomod
+              </h1>
+              <div className="flex items-center gap-2">
+                {tabs.find(tab => tab.id === activeTab)?.icon}
+                <h2 className="text-lg font-semibold text-foreground/90">
+                  {tabs.find(tab => tab.id === activeTab)?.label}
+                </h2>
+              </div>
+            </div>
           </div>
         </header>
         <main className="flex-1 p-6 overflow-auto bg-background">
           {activeTab === 'ai' && <AIChatInterface />}
           {activeTab !== 'ai' && (
-            <div className="text-foreground/80 space-y-4">
+            <div className="text-foreground/80 space-y-4 max-w-4xl mx-auto">
               <p>Content for {tabs.find(tab => tab.id === activeTab)?.label} goes here.</p>
             </div>
           )}
