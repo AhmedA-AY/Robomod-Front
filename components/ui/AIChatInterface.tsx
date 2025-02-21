@@ -25,9 +25,9 @@ export default function AIChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto">
-      <Card className="flex-1 overflow-hidden border-0">
-        <CardContent className="h-full overflow-y-auto p-6 space-y-6">
+    <div className="flex flex-col h-full max-w-4xl mx-auto bg-secondary">
+      <Card className="flex-1 overflow-hidden border-0 bg-secondary">
+        <CardContent className="h-full overflow-y-auto p-6 space-y-6 bg-secondary">
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`inline-block max-w-[85%] px-4 py-2 rounded-2xl ${
@@ -43,13 +43,13 @@ export default function AIChatInterface() {
           ))}
         </CardContent>
       </Card>
-      <CardFooter className="mt-4 p-0">
+      <CardFooter className="mt-4 p-0 bg-secondary">
         <div className="flex w-full space-x-3">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow bg-secondary/50 border-0 focus-visible:ring-1 text-foreground placeholder:text-foreground/50"
+            className="flex-grow bg-black/10 border-0 focus-visible:ring-1 text-foreground placeholder:text-foreground/50"
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           />
           <Button 

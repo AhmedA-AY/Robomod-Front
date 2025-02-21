@@ -26,9 +26,9 @@ export default function Home() {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-secondary">
       {/* Sidebar */}
-      <div className={`border-r border-input/10 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
+      <div className={`bg-secondary border-r border-input/10 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary tracking-tight">Robomod</h1>
         </div>
@@ -55,8 +55,8 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <header className="border-b border-input/10 p-6 flex items-center gap-4">
+      <div className="flex-1 flex flex-col bg-secondary">
+        <header className="border-b border-input/10 p-6 flex items-center gap-4 bg-secondary">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -72,7 +72,7 @@ export default function Home() {
             </h2>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 overflow-auto bg-secondary">
           {activeTab === 'ai' && <AIChatInterface />}
           {activeTab !== 'ai' && (
             <div className="text-foreground/80 space-y-4">
