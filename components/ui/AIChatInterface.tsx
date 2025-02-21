@@ -25,9 +25,9 @@ export default function AIChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto bg-secondary">
-      <Card className="flex-1 overflow-hidden border-0 bg-secondary">
-        <CardContent className="h-full overflow-y-auto p-6 space-y-6 bg-secondary">
+    <div className="flex flex-col h-full max-w-4xl mx-auto bg-background">
+      <Card className="flex-1 overflow-hidden border-0 bg-background">
+        <CardContent className="h-full overflow-y-auto p-6 space-y-6 bg-background">
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`inline-block max-w-[85%] px-4 py-2 rounded-2xl ${
@@ -43,7 +43,7 @@ export default function AIChatInterface() {
           ))}
         </CardContent>
       </Card>
-      <CardFooter className="mt-4 p-0 bg-secondary">
+      <CardFooter className="mt-4 p-0 bg-background">
         <div className="flex w-full space-x-3">
           <Input
             value={input}

@@ -26,9 +26,9 @@ export default function Home() {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
   return (
-    <div className="flex h-screen bg-secondary">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <div className={`bg-secondary border-r border-input/10 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
+      <div className={`bg-background border-r border-input/10 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary tracking-tight">Robomod</h1>
         </div>
@@ -38,7 +38,7 @@ export default function Home() {
               key={tab.id}
               variant={activeTab === tab.id ? 'secondary' : 'ghost'}
               className={`w-full justify-start text-foreground/80 hover:text-foreground ${
-                activeTab === tab.id ? 'bg-secondary/50 text-foreground' : ''
+                activeTab === tab.id ? 'bg-background/50 text-foreground' : ''
               }`}
               onClick={() => {
                 setActiveTab(tab.id)
@@ -55,13 +55,13 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-secondary">
-        <header className="border-b border-input/10 p-6 flex items-center gap-4 bg-secondary">
+      <div className="flex-1 flex flex-col bg-background">
+        <header className="border-b border-input/10 p-6 flex items-center gap-4 bg-background">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar} 
-            className="md:hidden hover:bg-secondary/50"
+            className="md:hidden hover:bg-background/50"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -72,7 +72,7 @@ export default function Home() {
             </h2>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto bg-secondary">
+        <main className="flex-1 p-6 overflow-auto bg-background">
           {activeTab === 'ai' && <AIChatInterface />}
           {activeTab !== 'ai' && (
             <div className="text-foreground/80 space-y-4">
