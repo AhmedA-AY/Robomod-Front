@@ -28,16 +28,18 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <div className={`bg-background shadow-md transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
-        <div className="p-4">
-          <h1 className="text-2xl font-bold text-primary">Robomod</h1>
+      <div className={`border-r border-input/10 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-primary tracking-tight">Robomod</h1>
         </div>
-        <nav>
+        <nav className="space-y-0.5 px-2">
           {tabs.map((tab) => (
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-              className="w-full justify-start text-foreground"
+              className={`w-full justify-start text-foreground/80 hover:text-foreground ${
+                activeTab === tab.id ? 'bg-secondary/50 text-foreground' : ''
+              }`}
               onClick={() => {
                 setActiveTab(tab.id)
                 if (window.innerWidth < 768) {
@@ -46,7 +48,7 @@ export default function Home() {
               }}
             >
               {tab.icon}
-              <span className="ml-2">{tab.label}</span>
+              <span className="ml-2 font-medium">{tab.label}</span>
             </Button>
           ))}
         </nav>
@@ -54,16 +56,26 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <header className="bg-background shadow-md p-4 flex items-center">
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden mr-2">
-            <Menu className="h-6 w-6" />
+        <header className="border-b border-input/10 p-6 flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="md:hidden hover:bg-secondary/50"
+          >
+            <Menu className="h-5 w-5" />
           </Button>
-          <h2 className="text-2xl font-bold text-primary">{tabs.find(tab => tab.id === activeTab)?.label}</h2>
+          <div className="flex items-center gap-3">
+            {tabs.find(tab => tab.id === activeTab)?.icon}
+            <h2 className="text-xl font-semibold text-foreground/90">
+              {tabs.find(tab => tab.id === activeTab)?.label}
+            </h2>
+          </div>
         </header>
-        <main className="flex-1 p-8 overflow-auto bg-background">
+        <main className="flex-1 p-6 overflow-auto">
           {activeTab === 'ai' && <AIChatInterface />}
           {activeTab !== 'ai' && (
-            <div className="text-foreground">
+            <div className="text-foreground/80 space-y-4">
               <p>Content for {tabs.find(tab => tab.id === activeTab)?.label} goes here.</p>
             </div>
           )}

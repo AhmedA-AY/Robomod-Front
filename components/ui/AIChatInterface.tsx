@@ -18,8 +18,6 @@ export default function AIChatInterface() {
     if (input.trim()) {
       setMessages([...messages, { text: input, sender: 'user' }])
       setInput('')
-      // Here you would typically call your AI backend
-      // For now, we'll just simulate a response
       setTimeout(() => {
         setMessages(prev => [...prev, { text: 'This is a simulated AI response.', sender: 'ai' }])
       }, 1000)
@@ -27,32 +25,39 @@ export default function AIChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <Card className="flex-1 overflow-hidden bg-background">
-        <CardContent className="h-full overflow-y-auto p-4">
+    <div className="flex flex-col h-full max-w-4xl mx-auto">
+      <Card className="flex-1 overflow-hidden border-0">
+        <CardContent className="h-full overflow-y-auto p-6 space-y-6">
           {messages.map((msg, index) => (
-            <div key={index} className={`mb-4 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block p-2 rounded-lg ${
+            <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`inline-block max-w-[85%] px-4 py-2 rounded-2xl ${
                 msg.sender === 'user' 
                   ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary text-secondary-foreground'
+                  : 'bg-secondary/50 text-secondary-foreground'
               }`}>
-                {msg.text}
-              </span>
+                <p className="text-sm md:text-base whitespace-pre-wrap break-words">
+                  {msg.text}
+                </p>
+              </div>
             </div>
           ))}
         </CardContent>
       </Card>
-      <CardFooter className="mt-4">
-        <div className="flex w-full space-x-2">
+      <CardFooter className="mt-4 p-0">
+        <div className="flex w-full space-x-3">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow bg-background text-foreground"
+            className="flex-grow bg-secondary/50 border-0 focus-visible:ring-1 text-foreground placeholder:text-foreground/50"
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           />
-          <Button onClick={handleSend}>Send</Button>
+          <Button 
+            onClick={handleSend}
+            className="px-6"
+          >
+            Send
+          </Button>
         </div>
       </CardFooter>
     </div>
