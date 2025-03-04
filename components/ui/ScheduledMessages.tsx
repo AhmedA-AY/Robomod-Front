@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Clock, Plus, Image as ImageIcon, Loader2, Bold, Italic, Code, Link } from 'lucide-react'
@@ -14,8 +14,7 @@ type ScheduledMessage = {
   scheduled_time: string
 }
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
@@ -42,11 +41,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetchScheduledMessages()
-  }, [chatId])
-
-  const fetchScheduledMessages = async () => {
+  const fetchScheduledMessages = useCallback(async () => {
     try {
       const initData = window?.Telegram?.WebApp?.initData
       const response = await fetch(`/api/scheduled_messages?chat_id=${chatId}&current_user=${initData}`)
@@ -62,7 +57,11 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [chatId])
+
+  useEffect(() => {
+    fetchScheduledMessages()
+  }, [fetchScheduledMessages])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -258,4 +257,4 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       </div>
     </div>
   )
-} 
+}
