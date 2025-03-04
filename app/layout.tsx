@@ -3,6 +3,7 @@ import Script from 'next/script'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import TelegramThemeProvider from '@/components/TelegramThemeProvider'
+import dynamic from "next/dynamic"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
   title: 'Robomod',
   description: 'A Telegram-inspired web application',
 }
+
+const TelegramScript = dynamic(() => import("./TelegramScript"), { ssr: false })
 
 export default function RootLayout({
   children
@@ -24,6 +27,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <TelegramThemeProvider />
+        <TelegramScript />
         {children}
       </body>
     </html>
