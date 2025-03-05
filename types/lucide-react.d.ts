@@ -23,4 +23,12 @@ declare module 'lucide-react' {
   export const Menu: Icon
   export const UserCircle2: Icon
   export const Group: Icon
+  export const Clock: Icon
+  export const Plus: Icon
+  export const Image: Icon
+  export const Loader2: Icon
+  export const Bold: Icon
+  export const Italic: Icon
+  export const Code: Icon
+  export const Link: Icon
 } 
