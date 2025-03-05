@@ -3,11 +3,15 @@ export async function fetchChats(token: string) {
   try {
     const response = await fetch("https://robomod.dablietech.club/api/chat?chat_id=1", {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: token,
       },
     })
     
     if (!response.ok) {
+      if (response.status === 401) {
+        console.error('Unauthorized: Invalid or missing token')
+        return []
+      }
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
@@ -16,6 +20,6 @@ export async function fetchChats(token: string) {
     return data
   } catch (error) {
     console.error('Error fetching chats:', error)
-    throw error
+    return []
   }
 }
