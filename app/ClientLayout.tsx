@@ -14,7 +14,6 @@ type Chat = {
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [chats, setChats] = useState<Chat[]>([])
 
   useEffect(() => {
     console.log('Layout mounted')
@@ -42,7 +41,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           console.log('Fetching chats with token:', webAppInitData)
           const data = await fetchChats(webAppInitData)
           console.log('Received chats:', data)
-          setChats(data || [])
           setIsLoading(false)
         }
         loadChats()
