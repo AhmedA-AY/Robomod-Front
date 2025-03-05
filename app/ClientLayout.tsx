@@ -3,14 +3,6 @@
 import { useState, useEffect } from 'react'
 import { fetchChats } from '@/lib/api'
 
-type Chat = {
-  id: string
-  name: string
-  type: 'group' | 'channel'
-  members?: number
-  subscribers?: number
-}
-
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
