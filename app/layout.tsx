@@ -1,8 +1,20 @@
+'use client'
+
 import './globals.css'
 import Script from 'next/script'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import TelegramThemeProvider from '@/components/TelegramThemeProvider'
+import { useState, useEffect } from 'react'
+import { fetchChats } from '@/lib/api'
+
+type Chat = {
+  id: string
+  name: string
+  type: 'group' | 'channel'
+  members?: number
+  subscribers?: number
+}
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,11 +28,77 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [chats, setChats] = useState<Chat[]>([])
+
+  useEffect(() => {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      // Check if Telegram WebApp is available
+      if (!window.Telegram?.WebApp) {
+        setError('This app must be opened from Telegram')
+        setIsLoading(false)
+        return
+      }
+      
+      // Initialize your app
+      try {
+        const initData = window.Telegram.WebApp.initData
+        if (!initData) {
+          setError('Missing initialization data')
+          setIsLoading(false)
+          return
+        }
+        
+        // Continue with your existing initialization
+        async function loadChats() {
+          const webAppInitData = `Bearer ${initData}`
+          const data = await fetchChats(webAppInitData)
+          setChats(data || [])
+          setIsLoading(false)
+        }
+        loadChats()
+      } catch (err) {
+        console.error('Initialization error:', err)
+        setError('Failed to initialize the app')
+        setIsLoading(false)
+      }
+    }
+  }, [])
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-foreground/70">Loading...</p>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-destructive">{error}</p>
+      </div>
+    )
+  }
+
   return (
     <html lang="en">
       <head>
         {/* Load Telegram Web App JS before interactive */}
-        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+        <Script 
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+          onError={(e) => {
+            console.error('Failed to load Telegram WebApp script:', e);
+          }}
+          onLoad={() => {
+            console.log('Telegram WebApp script loaded successfully');
+          }}
+        />
       </head>
       <body className={inter.className}>
         <TelegramThemeProvider />
