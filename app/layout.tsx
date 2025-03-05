@@ -33,10 +33,13 @@ export default function RootLayout({
   const [chats, setChats] = useState<Chat[]>([])
 
   useEffect(() => {
+    console.log('Layout mounted')
     // Check if we're in a browser environment
     if (typeof window !== 'undefined') {
+      console.log('Window object:', window?.Telegram)
       // Check if Telegram WebApp is available
       if (!window.Telegram?.WebApp) {
+        console.log('Telegram WebApp not found')
         setError('This app must be opened from Telegram')
         setIsLoading(false)
         return
@@ -45,7 +48,9 @@ export default function RootLayout({
       // Initialize your app
       try {
         const initData = window.Telegram.WebApp.initData
+        console.log('InitData:', initData)
         if (!initData) {
+          console.log('No init data found')
           setError('Missing initialization data')
           setIsLoading(false)
           return
@@ -54,7 +59,9 @@ export default function RootLayout({
         // Continue with your existing initialization
         async function loadChats() {
           const webAppInitData = `Bearer ${initData}`
+          console.log('Fetching chats with token:', webAppInitData)
           const data = await fetchChats(webAppInitData)
+          console.log('Received chats:', data)
           setChats(data || [])
           setIsLoading(false)
         }
