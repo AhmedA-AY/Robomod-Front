@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import TelegramThemeProvider from '@/components/TelegramThemeProvider'
 import ClientLayout from './ClientLayout'
-import TelegramScript from '@/components/TelegramScript'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,9 +18,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <TelegramScript />
-      </head>
       <body className={inter.className}>
         <TelegramThemeProvider />
         <ClientLayout>{children}</ClientLayout>
