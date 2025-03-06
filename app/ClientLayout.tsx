@@ -3,15 +3,45 @@
 import { useState, useEffect } from 'react'
 import { fetchChats } from '@/lib/api'
 
+interface Chat {
+  id: number
+  title: string
+  type: string
+}
+
+interface TelegramWebApp {
+  ready: () => void;
+  initData: string;
+  initDataUnsafe: {
+    user?: {
+      id: number;
+      first_name: string;
+      last_name?: string;
+      username?: string;
+    };
+  };
+  themeParams: {
+    bg_color: string;
+    text_color: string;
+    button_color?: string;
+    button_text_color?: string;
+    secondary_bg_color?: string;
+    hint_color?: string;
+  };
+}
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [chats, setChats] = useState<Chat[]>([])
 
   useEffect(() => {
     console.log('Layout mounted')
     if (typeof window !== 'undefined') {
+      const tg = window.Telegram?.WebApp as TelegramWebApp | undefined
       console.log('Window object:', window?.Telegram)
-      if (!window.Telegram?.WebApp) {
+      
+      if (!tg) {
         console.log('Telegram WebApp not found')
         setError('This app must be opened from Telegram')
         setIsLoading(false)
@@ -19,21 +49,29 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       }
       
       try {
-        const initData = window.Telegram.WebApp.initData
+        tg.ready()
+        const initData = tg.initData
         console.log('InitData:', initData)
-        if (!initData) {
-          console.log('No init data found')
+        console.log('InitDataUnsafe:', tg.initDataUnsafe)
+        
+        if (!initData || !tg.initDataUnsafe.user?.id) {
+          console.log('No init data or user found')
           setError('Missing initialization data')
           setIsLoading(false)
           return
         }
         
         async function loadChats() {
-          const webAppInitData = `Bearer ${initData}`
-          console.log('Fetching chats with token:', webAppInitData)
-          const data = await fetchChats(webAppInitData)
-          console.log('Received chats:', data)
-          setIsLoading(false)
+          try {
+            const data = await fetchChats(initData)
+            console.log('Received chats:', data)
+            setChats(data)
+            setIsLoading(false)
+          } catch (err) {
+            console.error('Failed to load chats:', err)
+            setError('Failed to load chats')
+            setIsLoading(false)
+          }
         }
         loadChats()
       } catch (err) {
@@ -47,7 +85,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-foreground/70">Loading...</p>
+        <p className="text-foreground/70">Loading your chats...</p>
       </div>
     )
   }
@@ -60,5 +98,33 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     )
   }
 
-  return <>{children}</>
+  if (chats.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-foreground/70">No groups or channels found. Make sure Robomod is added as an admin to your groups or channels.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-4">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">Your Chats</h1>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {chats.map((chat) => (
+              <div 
+                key={chat.id} 
+                className="p-4 rounded-lg bg-card border border-border hover:border-primary transition-colors"
+              >
+                <h2 className="text-lg font-semibold text-card-foreground">{chat.title}</h2>
+                <p className="text-sm text-card-foreground/70 capitalize">{chat.type}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
 } 

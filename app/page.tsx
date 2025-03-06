@@ -10,17 +10,17 @@ import { fetchChats } from '@/lib/api'
 
 // Add this type definition
 type Chat = {
-  id: string
-  name: string
-  type: 'group' | 'channel'
-  members?: number
-  subscribers?: number
+  id: number;
+  title: string;
+  type: string;
+  members?: number;
+  subscribers?: number;
 }
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('ai')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
+  const [selectedChat, setSelectedChat] = useState<number | null>(null)
   const [chats, setChats] = useState<Chat[]>([])
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function Home() {
                     <UserCircle2 className="w-12 h-12 text-primary" />
                   )}
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-foreground">{chat.name}</h3>
+                    <h3 className="font-semibold text-lg text-foreground">{chat.title}</h3>
                     <p className="text-sm text-foreground/70">
                       {chat.type === 'group' 
                         ? `${chat.members?.toLocaleString()} members`
@@ -95,7 +95,7 @@ export default function Home() {
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary tracking-tight">Robomod</h1>
           <p className="text-sm text-foreground/70 mt-1">
-            {chats.find(chat => chat.id === selectedChat)?.name}
+            {chats.find(chat => chat.id === selectedChat)?.title}
           </p>
         </div>
         <nav className="space-y-0.5 px-2">
@@ -149,7 +149,7 @@ export default function Home() {
         <main className="flex-1 p-6 overflow-auto bg-background">
           {activeTab === 'ai' && <AIChatInterface />}
           {activeTab === 'scheduled' && selectedChat && (
-            <ScheduledMessages chatId={selectedChat} />
+            <ScheduledMessages chatId={selectedChat.toString()} />
           )}
           {activeTab !== 'ai' && activeTab !== 'scheduled' && (
             <div className="text-foreground/80 space-y-4 max-w-4xl mx-auto">
