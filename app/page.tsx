@@ -25,13 +25,31 @@ export default function Home() {
 
   useEffect(() => {
     async function loadChats() {
-      const initData = window.Telegram?.WebApp?.initData || ''
-      // Example: Using a placeholder user ID (123). Adjust as needed.
-      const data = await getModeratorChat(initData)
-      // Ensure we always set an array
-      setChats(Array.isArray(data) ? data : [data])
+      try {
+        const tg = window.Telegram?.WebApp;
+        if (!tg) {
+          console.error('Telegram WebApp not available');
+          return;
+        }
+        
+        const initData = tg.initData;
+        const userId = tg.initDataUnsafe?.user?.id;
+        
+        if (!userId) {
+          console.error('User ID not available in Telegram WebApp');
+          return;
+        }
+        
+        console.log('Fetching chats for user ID:', userId);
+        const data = await getModeratorChat(initData, userId);
+        
+        // Ensure we always set an array
+        setChats(Array.isArray(data) ? data : [data]);
+      } catch (error) {
+        console.error('Error loading chats:', error);
+      }
     }
-    loadChats()
+    loadChats();
   }, [])
 
   const tabs = [

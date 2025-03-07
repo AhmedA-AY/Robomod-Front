@@ -1,7 +1,6 @@
-
-export async function getModeratorChat(initDataString: string) {
+export async function getModeratorChat(initDataString: string, moderatorUserId: number) {
   try {
-    const response = await fetch(`https://robomod.dablietech.club/api/get_moderator_chat`, {
+    const response = await fetch(`https://robomod.dablietech.club/api/get_moderator_chat?moderator_user_id=${moderatorUserId}`, {
       headers: {
         'WWW-Authenticate': `Bearer ${initDataString}`,
         'Content-Type': 'application/json',
@@ -23,7 +22,7 @@ export async function getFaqSettings(initDataString: string, chatId: number) {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/get_faq_settings?chat_id=${chatId}`, {
       headers: {
-        'Authorization': `Bearer ${initDataString}`,
+        'WWW-Authenticate': `Bearer ${initDataString}`,
         'Content-Type': 'application/json',
       },
     });
