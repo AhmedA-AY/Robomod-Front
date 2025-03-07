@@ -41,7 +41,7 @@ export default function Home() {
         }
         
         console.log('Fetching chats for user ID:', userId);
-        const data = await getModeratorChat(initData, userId);
+        const data = await getModeratorChat(initData);
         
         // Ensure we always set an array
         setChats(Array.isArray(data) ? data : [data]);
