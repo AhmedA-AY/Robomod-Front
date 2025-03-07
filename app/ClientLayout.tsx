@@ -1,12 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { fetchChats } from '@/lib/api'
-
+import { getModeratorChat } from '@/lib/api'
 interface Chat {
   id: number
-  title: string
-  type: string
 }
 
 interface TelegramWebApp {
@@ -63,10 +60,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         
         async function loadChats() {
           try {
-            const data = await fetchChats(initData)
-            console.log('Received chats:', data)
-            setChats(data)
-            setIsLoading(false)
+            if (tg && tg.initDataUnsafe.user?.id) {
+              const data = await getModeratorChat(initData, tg.initDataUnsafe.user.id)
+              console.log('Received chats:', data)
+              setChats(data)
+              setIsLoading(false)
+            } else {
+              throw new Error('Telegram WebApp or user ID is undefined')
+            }
           } catch (err) {
             console.error('Failed to load chats:', err)
             setError('Failed to load chats')
@@ -117,8 +118,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 key={chat.id} 
                 className="p-4 rounded-lg bg-card border border-border hover:border-primary transition-colors"
               >
-                <h2 className="text-lg font-semibold text-card-foreground">{chat.title}</h2>
-                <p className="text-sm text-card-foreground/70 capitalize">{chat.type}</p>
               </div>
             ))}
           </div>
@@ -127,4 +126,4 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       </div>
     </div>
   )
-} 
+}
