@@ -60,8 +60,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         
         async function loadChats() {
           try {
-            if (tg && tg.initDataUnsafe.user?.id) {
-              const userId = tg.initDataUnsafe.user.id;
+            if (tg && tg.initDataUnsafe) {
               const data = await getModeratorChat(initData)
               console.log('Received chats:', data)
               setChats(data)
