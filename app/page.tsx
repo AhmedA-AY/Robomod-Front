@@ -27,7 +27,7 @@ export default function Home() {
     async function loadChats() {
       const initData = window.Telegram?.WebApp?.initData || ''
       // Example: Using a placeholder user ID (123). Adjust as needed.
-      const data = await getModeratorChat(initData, 123)
+      const data = await getModeratorChat(initData)
       // Ensure we always set an array
       setChats(Array.isArray(data) ? data : [data])
     }
