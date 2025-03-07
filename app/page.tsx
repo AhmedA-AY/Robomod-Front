@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { MessageCircle, Command, Puzzle, HelpCircle, Trophy, Shield, Video, Users, Globe, Calendar, MessageSquare, Menu, UserCircle2, Group } from 'lucide-react'
 import AIChatInterface from '@/components/ui/AIChatInterface'
 import ScheduledMessages from '@/components/ui/ScheduledMessages'
-import { fetchChats } from '@/lib/api'
+import { getModeratorChat } from '@/lib/api'
 
 // Add this type definition
 type Chat = {
@@ -26,9 +26,10 @@ export default function Home() {
   useEffect(() => {
     async function loadChats() {
       const initData = window.Telegram?.WebApp?.initData || ''
-      const webAppInitData = `Bearer ${initData}`
-      const data = await fetchChats(webAppInitData)
-      setChats(data || [])
+      // Example: Using a placeholder user ID (123). Adjust as needed.
+      const data = await getModeratorChat(initData, 123)
+      // Ensure we always set an array
+      setChats(Array.isArray(data) ? data : [data])
     }
     loadChats()
   }, [])
