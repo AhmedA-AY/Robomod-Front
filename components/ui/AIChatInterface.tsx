@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Send } from "lucide-react"
+import { Button } from "../ui/button"
+import { Textarea } from "../ui/textarea"
+import { MessageSquare } from "lucide-react"
 
 interface AIChatInterfaceProps {
   chatId?: number;
@@ -74,7 +74,7 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
             size="icon" 
             className="shrink-0"
           >
-            <Send className="h-4 w-4" />
+            <MessageSquare className="h-4 w-4" />
           </Button>
         </div>
       </div>
