@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import TelegramThemeProvider from '@/components/TelegramThemeProvider'
 import TelegramScript from '@/components/TelegramScript'
 import ClientLayout from './ClientLayout'
+import { ChatProvider } from './page'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <TelegramScript />
         <TelegramThemeProvider />
-        <ClientLayout>{children}</ClientLayout>
+        <ChatProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </ChatProvider>
       </body>
     </html>
   )

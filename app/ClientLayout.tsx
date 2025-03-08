@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getModeratorChat } from '@/lib/api'
 import { UserCircle2, Group } from 'lucide-react'
+import { useChatContext } from './page'
 
 interface Chat {
   id: number;
@@ -44,6 +45,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [chats, setChats] = useState<Chat[]>([])
+  const { selectedChat, setSelectedChat } = useChatContext()
 
   useEffect(() => {
     console.log('Layout mounted')
@@ -106,6 +108,27 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
   }, [])
 
+  if (selectedChat) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-foreground">{selectedChat.title}</h1>
+              <button 
+                onClick={() => setSelectedChat(null)}
+                className="px-4 py-2 text-sm text-foreground/70 hover:text-foreground transition-colors"
+              >
+                Change Chat
+              </button>
+            </div>
+            {children}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -140,6 +163,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               <div 
                 key={chat.id} 
                 className="p-4 rounded-lg bg-card border border-border hover:border-primary transition-colors cursor-pointer"
+                onClick={() => setSelectedChat(chat)}
               >
                 <div className="flex items-center gap-4">
                   {chat.type === 'supergroup' ? (
@@ -158,7 +182,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             ))}
           </div>
         </div>
-        {children}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MessageCircle, Command, Puzzle, HelpCircle, Trophy, Shield, Video, Users, Globe, Calendar, MessageSquare, Menu, UserCircle2, Group } from 'lucide-react'
@@ -19,7 +19,7 @@ interface ModeratorChatResponse {
 }
 
 // Add this type definition
-type Chat = {
+interface Chat {
   id: number;
   title: string;
   type: string;
@@ -27,11 +27,34 @@ type Chat = {
   subscribers?: number;
 }
 
+interface ChatContextType {
+  selectedChat: Chat | null;
+  setSelectedChat: (chat: Chat | null) => void;
+}
+
+export const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+export function ChatProvider({ children }: { children: React.ReactNode }) {
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  return (
+    <ChatContext.Provider value={{ selectedChat, setSelectedChat }}>
+      {children}
+    </ChatContext.Provider>
+  );
+}
+
+export function useChatContext() {
+  const context = useContext(ChatContext);
+  if (context === undefined) {
+    throw new Error('useChatContext must be used within a ChatProvider');
+  }
+  return context;
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('ai')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [selectedChat, setSelectedChat] = useState<number | null>(null)
-  const [chats, setChats] = useState<Chat[]>([])
+  const { selectedChat } = useChatContext()
 
   useEffect(() => {
     async function loadChats() {
@@ -63,7 +86,7 @@ export default function Home() {
         }));
         
         console.log('Transformed chats:', transformedChats);
-        setChats(transformedChats);
+        setSelectedChat(transformedChats[0] || null);
       } catch (error) {
         console.error('Error loading chats:', error);
       }
@@ -100,7 +123,7 @@ export default function Home() {
               <Card 
                 key={chat.id}
                 className="hover:border-primary/50 cursor-pointer transition-colors"
-                onClick={() => setSelectedChat(chat.id)}
+                onClick={() => setSelectedChat(chat)}
               >
                 <CardContent className="p-6 flex items-center gap-4">
                   {chat.type === 'group' ? (
@@ -133,7 +156,7 @@ export default function Home() {
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary tracking-tight">Robomod</h1>
           <p className="text-sm text-foreground/70 mt-1">
-            {chats.find(chat => chat.id === selectedChat)?.title}
+            {selectedChat?.title}
           </p>
         </div>
         <nav className="space-y-0.5 px-2">
@@ -185,10 +208,8 @@ export default function Home() {
           </div>
         </header>
         <main className="flex-1 p-6 overflow-auto bg-background">
-          {activeTab === 'ai' && <AIChatInterface />}
-          {activeTab === 'scheduled' && selectedChat && (
-            <ScheduledMessages chatId={selectedChat.toString()} />
-          )}
+          {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
+          {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
           {activeTab !== 'ai' && activeTab !== 'scheduled' && (
             <div className="text-foreground/80 space-y-4 max-w-4xl mx-auto">
               <p>Content for {tabs.find(tab => tab.id === activeTab)?.label} goes here.</p>
