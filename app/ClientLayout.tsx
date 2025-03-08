@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getModeratorChat } from '@/lib/api'
+import { UserCircle2, Group } from 'lucide-react'
 
 interface Chat {
   id: number;
@@ -138,8 +139,21 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             {chats.map((chat) => (
               <div 
                 key={chat.id} 
-                className="p-4 rounded-lg bg-card border border-border hover:border-primary transition-colors"
+                className="p-4 rounded-lg bg-card border border-border hover:border-primary transition-colors cursor-pointer"
               >
+                <div className="flex items-center gap-4">
+                  {chat.type === 'supergroup' ? (
+                    <Group className="w-12 h-12 text-primary" />
+                  ) : (
+                    <UserCircle2 className="w-12 h-12 text-primary" />
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground">{chat.title}</h3>
+                    <p className="text-sm text-foreground/70 capitalize">
+                      {chat.type.replace('super', '')}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
