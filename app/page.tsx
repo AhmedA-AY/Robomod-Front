@@ -8,6 +8,16 @@ import AIChatInterface from '@/components/ui/AIChatInterface'
 import ScheduledMessages from '@/components/ui/ScheduledMessages'
 import { getModeratorChat } from '@/lib/api'
 
+// Add this interface for the API response
+interface ModeratorChatResponse {
+  chats: Array<{
+    moderation_id: string;
+    chat_id: number;
+    name: string;
+    type: string;
+  }>;
+}
+
 // Add this type definition
 type Chat = {
   id: number;
@@ -44,7 +54,7 @@ export default function Home() {
         const response = await getModeratorChat(initData, userId);
         
         // Transform the response to match our Chat type
-        const transformedChats = response.chats.map((chat: any) => ({
+        const transformedChats = (response as ModeratorChatResponse).chats.map((chat) => ({
           id: chat.chat_id,
           title: chat.name,
           type: chat.type.toLowerCase(),
