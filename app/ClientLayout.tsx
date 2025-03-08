@@ -60,13 +60,23 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         
         async function loadChats() {
           try {
-            if (tg && tg.initDataUnsafe) {
-              const data = await getModeratorChat(initData)
-              console.log('Received chats:', data)
-              setChats(data)
-              setIsLoading(false)
+            if (tg && tg.initDataUnsafe.user?.id) {
+              const userId = tg.initDataUnsafe.user.id;
+              const data = await getModeratorChat(initData, userId);
+              console.log('Received chats:', data);
+              
+              // Transform the response to match our Chat type
+              const transformedChats = data.chats.map((chat: any) => ({
+                id: chat.chat_id,
+                title: chat.name,
+                type: chat.type.toLowerCase()
+              }));
+              
+              setChats(transformedChats);
+              setIsLoading(false);
             } else {
-              throw new Error('Telegram WebApp or user ID is undefined')
+              setError('User ID not available');
+              setIsLoading(false);
             }
           } catch (err) {
             console.error('Failed to load chats:', err)
