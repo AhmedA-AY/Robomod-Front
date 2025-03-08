@@ -41,10 +41,19 @@ export default function Home() {
         }
         
         console.log('Fetching chats for user ID:', userId);
-        const data = await getModeratorChat(initData);
+        const response = await getModeratorChat(initData, userId);
         
-        // Ensure we always set an array
-        setChats(Array.isArray(data) ? data : [data]);
+        // Transform the response to match our Chat type
+        const transformedChats = response.chats.map((chat: any) => ({
+          id: chat.chat_id,
+          title: chat.name,
+          type: chat.type.toLowerCase(),
+          members: 0, // Default value since API doesn't provide this
+          subscribers: 0 // Default value since API doesn't provide this
+        }));
+        
+        console.log('Transformed chats:', transformedChats);
+        setChats(transformedChats);
       } catch (error) {
         console.error('Error loading chats:', error);
       }

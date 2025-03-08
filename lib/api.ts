@@ -1,8 +1,7 @@
-export async function getModeratorChat(initDataString: string) {
+export async function getModeratorChat(initDataString: string, moderatorUserId: number) {
   try {
-    const response = await fetch(`https://robomod.dablietech.club/api/get_moderator_chat`, {
+    const response = await fetch(`https://robomod.dablietech.club/api/get_moderator_chat?moderator_user_id=${moderatorUserId}`, {
       headers: {
-        'www-authenticate': 'Bearer',
         'Authorization': `Bearer ${initDataString}`,
         'Content-Type': 'application/json',
       },
