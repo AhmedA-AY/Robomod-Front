@@ -2,8 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { getModeratorChat } from '@/lib/api'
+
 interface Chat {
-  id: number
+  id: number;
+  title: string;
+  type: string;
+}
+
+interface ModeratorChatResponse {
+  chats: Array<{
+    moderation_id: string;
+    chat_id: number;
+    name: string;
+    type: string;
+  }>;
 }
 
 interface TelegramWebApp {
@@ -66,7 +78,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               console.log('Received chats:', data);
               
               // Transform the response to match our Chat type
-              const transformedChats = data.chats.map((chat: any) => ({
+              const transformedChats = (data as ModeratorChatResponse).chats.map((chat) => ({
                 id: chat.chat_id,
                 title: chat.name,
                 type: chat.type.toLowerCase()
