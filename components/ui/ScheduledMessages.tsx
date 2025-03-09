@@ -103,11 +103,14 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         throw new Error('Interval must be a positive number')
       }
 
+      // Convert interval from minutes to seconds
+      const intervalSeconds = intervalMinutes * 60
+
       // Build query parameters
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
       params.append('starting_at', startingAt.toString())
-      params.append('interval', intervalMinutes.toString())
+      params.append('interval', intervalSeconds.toString())
       
       if (editingMessage) {
         params.append('schedule_id', editingMessage.id)
@@ -208,7 +211,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const handleEdit = (message: ScheduledMessage) => {
     setEditingMessage(message)
     setNewMessage(message.message_text || '')
-    setInterval(message.interval.toString())
+    setInterval(Math.round(message.interval / 60).toString())
     setStartDate(new Date(message.starting_at * 1000))
   }
 
@@ -280,7 +283,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                       <div className="flex items-center gap-2 mt-2 text-sm text-gray-400">
                         <p>Starts: {format(new Date(message.starting_at * 1000), "PPP p")}</p>
                         <span>•</span>
-                        <p>Interval: {message.interval} minutes</p>
+                        <p>Interval: {Math.round(message.interval / 60)} minutes</p>
                         <span>•</span>
                         <p>Status: {message.enabled ? 'Active' : 'Paused'}</p>
                       </div>
