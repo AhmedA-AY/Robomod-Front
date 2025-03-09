@@ -86,16 +86,6 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Check if we have content to schedule
-    if (!newMessage && !mediaFile) {
-      // Display a less intrusive warning
-      console.warn("No content to schedule")
-      // Instead of setting error and returning, we'll show a toast or inline warning
-      // but we won't prevent the user from selecting date/time
-      return // Still return early as we can't submit without content
-    }
-
     setIsSubmitting(true)
     setError(null) // Clear any previous errors
     

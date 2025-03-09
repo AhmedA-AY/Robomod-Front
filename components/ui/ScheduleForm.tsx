@@ -45,8 +45,10 @@ export function ScheduleForm({
   editingMessage,
   onSubmit
 }: ScheduleFormProps) {
-  // Check if form can be submitted (has message or media)
-  const canSubmit = !!newMessage || !!mediaFile;
+  // Check if form can be submitted (has message or media AND valid interval)
+  const hasContent = !!newMessage || !!mediaFile;
+  const hasValidInterval = !isNaN(parseInt(interval)) && parseInt(interval) > 0;
+  const canSubmit = hasContent && hasValidInterval;
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -66,6 +68,11 @@ export function ScheduleForm({
             min="1"
             className="bg-[#374151] border-gray-600 text-white"
           />
+          {!hasValidInterval && interval !== '' && (
+            <p className="text-amber-400 text-sm mt-2">
+              Please enter a valid interval greater than 0
+            </p>
+          )}
         </div>
 
         <div>
@@ -76,7 +83,7 @@ export function ScheduleForm({
             placeholder="Type your message..."
             className="bg-[#374151] border-gray-600 text-white min-h-[120px]"
           />
-          {!canSubmit && (
+          {!hasContent && (
             <p className="text-amber-400 text-sm mt-2">
               Please enter a message or select a media file to schedule
             </p>
