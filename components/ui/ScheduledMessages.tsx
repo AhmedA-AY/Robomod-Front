@@ -111,19 +111,25 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         throw new Error('Interval must be a positive number')
       }
 
-      // Create form data for the message content and parameters
-      const formData = new FormData()
-      
-      // Add required query parameters to form data
-      formData.append('chat_id', chatId)
-      formData.append('starting_at', startingAt.toString())
-      formData.append('interval', intervalMinutes.toString())
+      // Build query parameters
+      const params = new URLSearchParams()
+      params.append('chat_id', chatId)
+      params.append('starting_at', startingAt.toString())
+      params.append('interval', intervalMinutes.toString())
       
       if (editingMessage) {
-        formData.append('schedule_id', editingMessage.id)
+        params.append('schedule_id', editingMessage.id)
       }
+
+      // Build the URL with query parameters
+      const baseUrl = editingMessage 
+        ? 'https://robomod.dablietech.club/api/edit_scheduled_message'
+        : 'https://robomod.dablietech.club/api/add_scheduled_message'
       
-      // Add message content
+      const url = `${baseUrl}?${params.toString()}`
+      
+      // Create form data for the message content only
+      const formData = new FormData()
       if (newMessage) {
         formData.append('message_text', newMessage)
       }
@@ -131,11 +137,6 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         formData.append('media', mediaFile)
       }
 
-      // Build the URL without query parameters
-      const url = editingMessage 
-        ? 'https://robomod.dablietech.club/api/edit_scheduled_message'
-        : 'https://robomod.dablietech.club/api/add_scheduled_message'
-      
       console.log('Submitting to URL:', url)
       
       const response = await fetch(url, {
@@ -153,7 +154,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         let errorMessage = 'Failed to schedule message'
         try {
           const errorData = JSON.parse(errorText)
-          errorMessage = errorData.detail || errorData.message || errorMessage
+          errorMessage = errorData.detail?.[0]?.msg || errorData.detail || errorData.message || errorMessage
         } catch {
           // If JSON parsing fails, use the error text
           errorMessage = errorText || errorMessage
