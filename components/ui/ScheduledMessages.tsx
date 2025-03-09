@@ -92,9 +92,15 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     if (!newMessage && !mediaFile) return
 
     setIsSubmitting(true)
+    setError(null) // Clear any previous errors
+    
     try {
+      const tg = window?.Telegram?.WebApp
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized')
+      }
+
       const formData = new FormData()
-      
       if (newMessage) {
         formData.append('message_text', newMessage)
       }
@@ -104,21 +110,38 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
       const startingAt = Math.floor(startDate.getTime() / 1000)
       const intervalMinutes = parseInt(interval)
+      
+      if (isNaN(intervalMinutes) || intervalMinutes < 1) {
+        throw new Error('Invalid interval value')
+      }
 
       const url = editingMessage 
-        ? `https://robomod.dablietech.club/api/edit_scheduled_message?chat_id=${chatId}&schedule_id=${editingMessage.id}&starting_at=${startingAt}&interval=${intervalMinutes}`
-        : `https://robomod.dablietech.club/api/add_scheduled_message?chat_id=${chatId}&starting_at=${startingAt}&interval=${intervalMinutes}`
+        ? `https://robomod.dablietech.club/api/edit_scheduled_message`
+        : `https://robomod.dablietech.club/api/add_scheduled_message`
+
+      // Add parameters to formData instead of URL
+      formData.append('chat_id', chatId)
+      formData.append('starting_at', startingAt.toString())
+      formData.append('interval', intervalMinutes.toString())
+      
+      if (editingMessage) {
+        formData.append('schedule_id', editingMessage.id)
+      }
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${window?.Telegram?.WebApp?.initData}`,
+          'Authorization': `Bearer ${tg.initData}`,
         },
         body: formData,
       })
 
       if (!response.ok) {
-        throw new Error(editingMessage ? 'Failed to edit message' : 'Failed to schedule message')
+        const errorData = await response.json().catch(() => null)
+        throw new Error(
+          errorData?.message || 
+          (editingMessage ? 'Failed to edit message' : 'Failed to schedule message')
+        )
       }
 
       setNewMessage('')
@@ -129,30 +152,44 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       fetchScheduledMessages()
     } catch (error) {
       console.error('Error with scheduled message:', error)
+      setError(error instanceof Error ? error.message : 'Failed to process request')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleDelete = async (scheduleId: string) => {
+    setError(null) // Clear any previous errors
     try {
+      const tg = window?.Telegram?.WebApp
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized')
+      }
+
+      const formData = new FormData()
+      formData.append('chat_id', chatId)
+      formData.append('schedule_id', scheduleId)
+
       const response = await fetch(
-        `https://robomod.dablietech.club/api/delete_scheduled_message?chat_id=${chatId}&schedule_id=${scheduleId}`,
+        'https://robomod.dablietech.club/api/delete_scheduled_message',
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${window?.Telegram?.WebApp?.initData}`,
+            'Authorization': `Bearer ${tg.initData}`,
           },
+          body: formData,
         }
       )
 
       if (!response.ok) {
-        throw new Error('Failed to delete message')
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || 'Failed to delete message')
       }
 
       fetchScheduledMessages()
     } catch (error) {
       console.error('Error deleting message:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete message')
     }
   }
 
