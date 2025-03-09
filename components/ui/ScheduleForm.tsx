@@ -45,6 +45,9 @@ export function ScheduleForm({
   editingMessage,
   onSubmit
 }: ScheduleFormProps) {
+  // Check if form can be submitted (has message or media)
+  const canSubmit = !!newMessage || !!mediaFile;
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -96,7 +99,7 @@ export function ScheduleForm({
         </div>
         <Button 
           type="submit" 
-          disabled={isSubmitting || (!newMessage && !mediaFile)}
+          disabled={isSubmitting || !canSubmit}
           className="min-w-[140px] bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600"
         >
           {isSubmitting ? (
