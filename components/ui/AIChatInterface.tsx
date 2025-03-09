@@ -67,7 +67,7 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
             <div className="p-4 bg-primary/10 rounded-full mb-4">
               <MessageSquare className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-xl font-medium mb-2">AI Assistant</h3>
+            <h3 className="text-xl font-medium mb-2">Robo Assistant</h3>
             <p className="text-muted-foreground max-w-md">
               Ask any questions about managing your group or channel.
             </p>
