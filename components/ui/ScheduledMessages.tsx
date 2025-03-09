@@ -89,7 +89,10 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage && !mediaFile) return
+    if (!newMessage && !mediaFile) {
+      setError("Please enter a message or select a media file")
+      return
+    }
 
     setIsSubmitting(true)
     setError(null) // Clear any previous errors
@@ -100,6 +103,32 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
+      // Validate required fields
+      const startingAt = Math.floor(startDate.getTime() / 1000)
+      const intervalMinutes = parseInt(interval)
+      
+      if (isNaN(intervalMinutes) || intervalMinutes < 1) {
+        throw new Error('Interval must be a positive number')
+      }
+
+      // Use URLSearchParams for query parameters
+      const params = new URLSearchParams()
+      params.append('chat_id', chatId)
+      params.append('starting_at', startingAt.toString())
+      params.append('interval', intervalMinutes.toString())
+      
+      if (editingMessage) {
+        params.append('schedule_id', editingMessage.id)
+      }
+
+      // Build the URL with query parameters
+      const baseUrl = editingMessage 
+        ? 'https://robomod.dablietech.club/api/edit_scheduled_message'
+        : 'https://robomod.dablietech.club/api/add_scheduled_message'
+      
+      const url = `${baseUrl}?${params.toString()}`
+
+      // Create form data for the message content
       const formData = new FormData()
       if (newMessage) {
         formData.append('message_text', newMessage)
@@ -108,26 +137,8 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         formData.append('media', mediaFile)
       }
 
-      const startingAt = Math.floor(startDate.getTime() / 1000)
-      const intervalMinutes = parseInt(interval)
+      console.log('Submitting to URL:', url)
       
-      if (isNaN(intervalMinutes) || intervalMinutes < 1) {
-        throw new Error('Invalid interval value')
-      }
-
-      const url = editingMessage 
-        ? `https://robomod.dablietech.club/api/edit_scheduled_message`
-        : `https://robomod.dablietech.club/api/add_scheduled_message`
-
-      // Add parameters to formData instead of URL
-      formData.append('chat_id', chatId)
-      formData.append('starting_at', startingAt.toString())
-      formData.append('interval', intervalMinutes.toString())
-      
-      if (editingMessage) {
-        formData.append('schedule_id', editingMessage.id)
-      }
-
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -137,13 +148,22 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(
-          errorData?.message || 
-          (editingMessage ? 'Failed to edit message' : 'Failed to schedule message')
-        )
+        const errorText = await response.text()
+        console.error('API Error Response:', errorText)
+        
+        let errorMessage = 'Failed to schedule message'
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.detail || errorData.message || errorMessage
+        } catch (e) {
+          // If JSON parsing fails, use the error text
+          errorMessage = errorText || errorMessage
+        }
+        
+        throw new Error(errorMessage)
       }
 
+      // Success - reset form
       setNewMessage('')
       setMediaFile(null)
       setEditingMessage(null)
