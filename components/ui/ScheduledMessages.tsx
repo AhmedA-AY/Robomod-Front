@@ -154,7 +154,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         try {
           const errorData = JSON.parse(errorText)
           errorMessage = errorData.detail || errorData.message || errorMessage
-        } catch (_) {
+        } catch {
           // If JSON parsing fails, use the error text
           errorMessage = errorText || errorMessage
         }
