@@ -18,7 +18,8 @@ export default function TelegramScript() {
         if (!initData || !initDataUnsafe) {
           setError('Invalid Telegram Web App initialization')
         }
-      } catch (e) {
+      } catch (error) {
+        console.error('Telegram Web App initialization error:', error)
         setError('Failed to initialize Telegram Web App')
       }
     }
