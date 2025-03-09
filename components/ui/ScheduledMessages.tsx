@@ -86,6 +86,13 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check for required content before proceeding
+    if (!newMessage && !mediaFile) {
+      setError('Either message text or media must be provided')
+      return
+    }
+    
     setIsSubmitting(true)
     setError(null) // Clear any previous errors
     

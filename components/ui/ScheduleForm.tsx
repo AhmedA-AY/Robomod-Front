@@ -46,12 +46,18 @@ export function ScheduleForm({
   onSubmit
 }: ScheduleFormProps) {
   // Check if form can be submitted (has message or media AND valid interval)
-  const hasContent = !!newMessage || !!mediaFile;
+  const hasContent = Boolean(newMessage.trim()) || !!mediaFile;
   const hasValidInterval = !isNaN(parseInt(interval)) && parseInt(interval) > 0;
   const canSubmit = hasContent && hasValidInterval;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      if (!hasContent) {
+        return; // Prevent submission if no content
+      }
+      onSubmit(e);
+    }} className="space-y-6">
       <div className="space-y-4">
         <TelegramDatePicker
           date={startDate}
