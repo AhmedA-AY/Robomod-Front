@@ -12,6 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DateTimePicker } from "@/components/ui/DateTimePicker"
+import { ScheduleForm } from "@/components/ui/ScheduleForm"
 
 interface ScheduledMessage {
   id: string;
@@ -249,185 +251,19 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       <div className="flex-1 overflow-auto p-4">
         <Card className="bg-[#2d3748] border-gray-700 mb-6">
           <CardContent className="p-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex gap-2 mb-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const textarea = document.querySelector('textarea')
-                    if (!textarea) return
-                    const start = textarea.selectionStart
-                    const end = textarea.selectionEnd
-                    const text = textarea.value
-                    const newText = text.substring(0, start) + '**' + text.substring(start, end) + '**' + text.substring(end)
-                    setNewMessage(newText)
-                  }}
-                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
-                >
-                  <Bold className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const textarea = document.querySelector('textarea')
-                    if (!textarea) return
-                    const start = textarea.selectionStart
-                    const end = textarea.selectionEnd
-                    const text = textarea.value
-                    const newText = text.substring(0, start) + '_' + text.substring(start, end) + '_' + text.substring(end)
-                    setNewMessage(newText)
-                  }}
-                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
-                >
-                  <Italic className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const textarea = document.querySelector('textarea')
-                    if (!textarea) return
-                    const start = textarea.selectionStart
-                    const end = textarea.selectionEnd
-                    const text = textarea.value
-                    const newText = text.substring(0, start) + '`' + text.substring(start, end) + '`' + text.substring(end)
-                    setNewMessage(newText)
-                  }}
-                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
-                >
-                  <Code className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const textarea = document.querySelector('textarea')
-                    if (!textarea) return
-                    const start = textarea.selectionStart
-                    const end = textarea.selectionEnd
-                    const text = textarea.value
-                    const newText = text.substring(0, start) + '[' + text.substring(start, end) + '](url)' + text.substring(end)
-                    setNewMessage(newText)
-                  }}
-                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
-                >
-                  <Link className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-gray-300">Message</Label>
-                  <textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your scheduled message..."
-                    className="flex w-full rounded-lg border border-gray-600 bg-[#374151] px-4 py-3 text-sm min-h-[100px] resize-none text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-300">Start Date & Time</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
-                        >
-                          <Clock className="mr-2 h-4 w-4" />
-                          {format(startDate, "PPP p")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-[#2d3748] border-gray-600">
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={(date) => date && setStartDate(date)}
-                          initialFocus
-                          className="bg-[#2d3748] text-white"
-                          classNames={{
-                            day_selected: "bg-blue-500 text-white hover:bg-blue-600",
-                            day: "text-gray-300 hover:bg-gray-700",
-                            day_today: "bg-gray-700 text-white",
-                            head_cell: "text-gray-400",
-                            cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-blue-500 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
-                            nav_button: "bg-transparent text-gray-400 hover:bg-gray-700",
-                            nav_button_previous: "absolute left-1",
-                            nav_button_next: "absolute right-1",
-                            caption: "flex justify-center pt-1 relative items-center text-gray-300",
-                          }}
-                        />
-                        <div className="p-3 border-t border-gray-600">
-                          <Input
-                            type="time"
-                            value={format(startDate, "HH:mm")}
-                            onChange={(e) => {
-                              const [hours, minutes] = e.target.value.split(':')
-                              const newDate = new Date(startDate)
-                              newDate.setHours(parseInt(hours))
-                              newDate.setMinutes(parseInt(minutes))
-                              setStartDate(newDate)
-                            }}
-                            className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                          />
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-300">Interval (minutes)</Label>
-                    <Input
-                      type="number"
-                      value={interval}
-                      onChange={(e) => setInterval(e.target.value)}
-                      min="1"
-                      className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      id="media"
-                      className="hidden"
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMediaFile(e.target.files?.[0] || null)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => document.getElementById('media')?.click()}
-                      className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
-                    >
-                      <FiUpload className="w-4 h-4 mr-2" />
-                      {mediaFile ? mediaFile.name : 'Upload Media'}
-                    </Button>
-                  </div>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting || (!newMessage && !mediaFile)}
-                    className="px-8 bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : editingMessage ? (
-                      'Update Message'
-                    ) : (
-                      'Schedule Message'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </form>
+            <ScheduleForm
+              startDate={startDate}
+              setStartDate={setStartDate}
+              interval={interval}
+              setInterval={setInterval}
+              newMessage={newMessage}
+              setNewMessage={setNewMessage}
+              mediaFile={mediaFile}
+              setMediaFile={setMediaFile}
+              isSubmitting={isSubmitting}
+              editingMessage={editingMessage}
+              onSubmit={handleSubmit}
+            />
           </CardContent>
         </Card>
 
