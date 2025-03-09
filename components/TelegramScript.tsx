@@ -6,7 +6,7 @@ export default function TelegramScript() {
   return (
     <Script
       src="https://telegram.org/js/telegram-web-app.js"
-      strategy="beforeInteractive"
+      strategy="afterInteractive"
       onError={(e) => {
         console.error('Failed to load Telegram Web App script:', e)
       }}

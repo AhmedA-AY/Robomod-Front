@@ -171,6 +171,27 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="bg-destructive/10 p-6 rounded-lg max-w-md text-center">
+          <p className="text-destructive font-medium text-lg mb-2">Error</p>
+          <p className="text-foreground/90">{error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => {
+              setError(null)
+              fetchScheduledMessages()
+            }}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b border-border">
