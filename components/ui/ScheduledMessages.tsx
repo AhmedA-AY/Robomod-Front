@@ -45,6 +45,7 @@ export { Textarea }
 export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [messages, setMessages] = useState<ScheduledMessage[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -54,10 +55,16 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
   const fetchScheduledMessages = useCallback(async () => {
     try {
-      const initData = window?.Telegram?.WebApp?.initData
+      const tg = window?.Telegram?.WebApp
+      if (!tg || !tg.initData) {
+        setError('Telegram Web App is not initialized')
+        setIsLoading(false)
+        return
+      }
+
       const response = await fetch(`https://robomod.dablietech.club/api/scheduled_messages?chat_id=${chatId}`, {
         headers: {
-          'Authorization': `Bearer ${initData}`,
+          'Authorization': `Bearer ${tg.initData}`,
         },
       })
       
@@ -66,9 +73,11 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       }
 
       const data = await response.json()
-      setMessages(data)
+      // Ensure data.messages exists and is an array, otherwise use empty array
+      setMessages(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching scheduled messages:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch messages')
     } finally {
       setIsLoading(false)
     }
