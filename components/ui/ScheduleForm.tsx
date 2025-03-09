@@ -76,6 +76,11 @@ export function ScheduleForm({
             placeholder="Type your message..."
             className="bg-[#374151] border-gray-600 text-white min-h-[120px]"
           />
+          {!canSubmit && (
+            <p className="text-amber-400 text-sm mt-2">
+              Please enter a message or select a media file to schedule
+            </p>
+          )}
         </div>
       </div>
 
