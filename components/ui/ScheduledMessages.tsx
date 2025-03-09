@@ -3,15 +3,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Plus, Image as ImageIcon, Loader2, Bold, Italic, Code, Link } from 'lucide-react'
+import { Clock, Plus, Image, Loader2, Bold, Italic, Code, Link } from 'lucide-react'
+import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
-type ScheduledMessage = {
-  id: string
-  message_text?: string
-  media?: string
-  scheduled_time: string
+interface ScheduledMessage {
+  id: string;
+  message_text?: string;
+  media?: string;
+  starting_at: number;
+  interval: number;
+  enabled: boolean;
 }
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
@@ -40,11 +48,18 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [newMessage, setNewMessage] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [startDate, setStartDate] = useState<Date>(new Date())
+  const [interval, setInterval] = useState('60') // Default 60 minutes
+  const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null)
 
   const fetchScheduledMessages = useCallback(async () => {
     try {
       const initData = window?.Telegram?.WebApp?.initData
-      const response = await fetch(`/api/scheduled_messages?chat_id=${chatId}&current_user=${initData}`)
+      const response = await fetch(`https://robomod.dablietech.club/api/scheduled_messages?chat_id=${chatId}`, {
+        headers: {
+          'Authorization': `Bearer ${initData}`,
+        },
+      })
       
       if (!response.ok) {
         throw new Error('Failed to fetch scheduled messages')
@@ -70,8 +85,6 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     setIsSubmitting(true)
     try {
       const formData = new FormData()
-      formData.append('chat_id', chatId)
-      formData.append('current_user', window?.Telegram?.WebApp?.initData || '')
       
       if (newMessage) {
         formData.append('message_text', newMessage)
@@ -80,63 +93,65 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         formData.append('media', mediaFile)
       }
 
-      const response = await fetch('/api/add_scheduled_message', {
+      const startingAt = Math.floor(startDate.getTime() / 1000)
+      const intervalMinutes = parseInt(interval)
+
+      const url = editingMessage 
+        ? `https://robomod.dablietech.club/api/edit_scheduled_message?chat_id=${chatId}&schedule_id=${editingMessage.id}&starting_at=${startingAt}&interval=${intervalMinutes}`
+        : `https://robomod.dablietech.club/api/add_scheduled_message?chat_id=${chatId}&starting_at=${startingAt}&interval=${intervalMinutes}`
+
+      const response = await fetch(url, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${window?.Telegram?.WebApp?.initData}`,
+        },
         body: formData,
       })
 
       if (!response.ok) {
-        throw new Error('Failed to schedule message')
+        throw new Error(editingMessage ? 'Failed to edit message' : 'Failed to schedule message')
       }
 
       setNewMessage('')
       setMediaFile(null)
+      setEditingMessage(null)
+      setStartDate(new Date())
+      setInterval('60')
       fetchScheduledMessages()
     } catch (error) {
-      console.error('Error scheduling message:', error)
+      console.error('Error with scheduled message:', error)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const insertFormatting = (format: string) => {
-    const textarea = document.querySelector('textarea')
-    if (!textarea) return
+  const handleDelete = async (scheduleId: string) => {
+    try {
+      const response = await fetch(
+        `https://robomod.dablietech.club/api/delete_scheduled_message?chat_id=${chatId}&schedule_id=${scheduleId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${window?.Telegram?.WebApp?.initData}`,
+          },
+        }
+      )
 
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const text = textarea.value
+      if (!response.ok) {
+        throw new Error('Failed to delete message')
+      }
 
-    let prefix = ''
-    let suffix = ''
-
-    switch (format) {
-      case 'bold':
-        prefix = '**'
-        suffix = '**'
-        break
-      case 'italic':
-        prefix = '_'
-        suffix = '_'
-        break
-      case 'code':
-        prefix = '`'
-        suffix = '`'
-        break
-      case 'link':
-        prefix = '['
-        suffix = '](url)'
-        break
+      fetchScheduledMessages()
+    } catch (error) {
+      console.error('Error deleting message:', error)
     }
+  }
 
-    const newText = text.substring(0, start) + prefix + text.substring(start, end) + suffix + text.substring(end)
-    setNewMessage(newText)
-    
-    // Reset cursor position
-    setTimeout(() => {
-      textarea.focus()
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length)
-    }, 0)
+  const handleEdit = (message: ScheduledMessage) => {
+    setEditingMessage(message)
+    setNewMessage(message.message_text || '')
+    setInterval(message.interval.toString())
+    setStartDate(new Date(message.starting_at * 1000))
   }
 
   if (isLoading) {
@@ -163,7 +178,15 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => insertFormatting('bold')}
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea')
+                    if (!textarea) return
+                    const start = textarea.selectionStart
+                    const end = textarea.selectionEnd
+                    const text = textarea.value
+                    const newText = text.substring(0, start) + '**' + text.substring(start, end) + '**' + text.substring(end)
+                    setNewMessage(newText)
+                  }}
                   className="px-2 h-8"
                 >
                   <Bold className="w-4 h-4" />
@@ -172,7 +195,15 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => insertFormatting('italic')}
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea')
+                    if (!textarea) return
+                    const start = textarea.selectionStart
+                    const end = textarea.selectionEnd
+                    const text = textarea.value
+                    const newText = text.substring(0, start) + '_' + text.substring(start, end) + '_' + text.substring(end)
+                    setNewMessage(newText)
+                  }}
                   className="px-2 h-8"
                 >
                   <Italic className="w-4 h-4" />
@@ -181,7 +212,15 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => insertFormatting('code')}
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea')
+                    if (!textarea) return
+                    const start = textarea.selectionStart
+                    const end = textarea.selectionEnd
+                    const text = textarea.value
+                    const newText = text.substring(0, start) + '`' + text.substring(start, end) + '`' + text.substring(end)
+                    setNewMessage(newText)
+                  }}
                   className="px-2 h-8"
                 >
                   <Code className="w-4 h-4" />
@@ -190,54 +229,114 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => insertFormatting('link')}
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea')
+                    if (!textarea) return
+                    const start = textarea.selectionStart
+                    const end = textarea.selectionEnd
+                    const text = textarea.value
+                    const newText = text.substring(0, start) + '[' + text.substring(start, end) + '](url)' + text.substring(end)
+                    setNewMessage(newText)
+                  }}
                   className="px-2 h-8"
                 >
                   <Link className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex gap-4">
-                <Textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your scheduled message..."
-                  className="flex-grow min-h-[80px] max-h-[120px] bg-background resize-none"
-                />
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="file"
-                    id="media"
-                    className="hidden"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMediaFile(e.target.files?.[0] || null)}
+
+              <div className="space-y-4">
+                <div>
+                  <Label>Message</Label>
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type your scheduled message..."
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[100px] resize-none"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('media')?.click()}
-                    className="h-9 w-9 p-0"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Start Date & Time</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <Clock className="mr-2 h-4 w-4" />
+                          {format(startDate, "PPP p")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={(date) => date && setStartDate(date)}
+                          initialFocus
+                        />
+                        <div className="p-3 border-t">
+                          <Input
+                            type="time"
+                            value={format(startDate, "HH:mm")}
+                            onChange={(e) => {
+                              const [hours, minutes] = e.target.value.split(':')
+                              const newDate = new Date(startDate)
+                              newDate.setHours(parseInt(hours))
+                              newDate.setMinutes(parseInt(minutes))
+                              setStartDate(newDate)
+                            }}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div>
+                    <Label>Interval (minutes)</Label>
+                    <Input
+                      type="number"
+                      value={interval}
+                      onChange={(e) => setInterval(e.target.value)}
+                      min="1"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      id="media"
+                      className="hidden"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMediaFile(e.target.files?.[0] || null)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('media')?.click()}
+                      className="w-full"
+                    >
+                      <Image className="w-4 h-4 mr-2" />
+                      {mediaFile ? mediaFile.name : 'Upload Media'}
+                    </Button>
+                  </div>
                   <Button 
                     type="submit" 
                     disabled={isSubmitting || (!newMessage && !mediaFile)}
-                    size="sm"
-                    className="h-9 w-9 p-0"
+                    className="px-8"
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : editingMessage ? (
+                      'Update Message'
                     ) : (
-                      <Plus className="w-4 h-4" />
+                      'Schedule Message'
                     )}
                   </Button>
                 </div>
               </div>
-              {mediaFile && (
-                <p className="text-sm text-foreground/70">
-                  Selected file: {mediaFile.name}
-                </p>
-              )}
             </form>
           </CardContent>
         </Card>
@@ -257,14 +356,36 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                     <Clock className="w-5 h-5 text-primary shrink-0 mt-1" />
                     <div className="flex-grow">
                       {message.message_text && (
-                        <p className="text-foreground">{message.message_text}</p>
+                        <p className="text-foreground whitespace-pre-wrap">{message.message_text}</p>
                       )}
                       {message.media && (
-                        <p className="text-sm text-foreground/70">Contains media</p>
+                        <p className="text-sm text-foreground/70 mt-1">Contains media</p>
                       )}
-                      <p className="text-sm text-foreground/70 mt-1">
-                        Scheduled for: {new Date(message.scheduled_time).toLocaleString()}
-                      </p>
+                      <div className="flex items-center gap-2 mt-2 text-sm text-foreground/70">
+                        <p>Starts: {format(new Date(message.starting_at * 1000), "PPP p")}</p>
+                        <span>•</span>
+                        <p>Interval: {message.interval} minutes</p>
+                        <span>•</span>
+                        <p>Status: {message.enabled ? 'Active' : 'Paused'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(message)}
+                        className="h-8 w-8"
+                      >
+                        <FiEdit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(message.id)}
+                        className="h-8 w-8 text-destructive"
+                      >
+                        <FiTrash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
