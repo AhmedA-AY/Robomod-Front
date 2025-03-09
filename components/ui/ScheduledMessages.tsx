@@ -240,14 +240,14 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-border">
+    <div className="h-full flex flex-col bg-[#1f2937] text-white">
+      <div className="p-4 border-b border-gray-700">
         <h2 className="text-lg font-medium">Scheduled Messages</h2>
-        <p className="text-sm text-muted-foreground">Create and manage scheduled posts</p>
+        <p className="text-sm text-gray-400">Create and manage scheduled posts</p>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        <Card className="border border-input/10 mb-6">
+        <Card className="bg-[#2d3748] border-gray-700 mb-6">
           <CardContent className="p-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-2 mb-2">
@@ -264,7 +264,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                     const newText = text.substring(0, start) + '**' + text.substring(start, end) + '**' + text.substring(end)
                     setNewMessage(newText)
                   }}
-                  className="px-2 h-8"
+                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
                 >
                   <Bold className="w-4 h-4" />
                 </Button>
@@ -281,7 +281,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                     const newText = text.substring(0, start) + '_' + text.substring(start, end) + '_' + text.substring(end)
                     setNewMessage(newText)
                   }}
-                  className="px-2 h-8"
+                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
                 >
                   <Italic className="w-4 h-4" />
                 </Button>
@@ -298,7 +298,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                     const newText = text.substring(0, start) + '`' + text.substring(start, end) + '`' + text.substring(end)
                     setNewMessage(newText)
                   }}
-                  className="px-2 h-8"
+                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
                 >
                   <Code className="w-4 h-4" />
                 </Button>
@@ -315,7 +315,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                     const newText = text.substring(0, start) + '[' + text.substring(start, end) + '](url)' + text.substring(end)
                     setNewMessage(newText)
                   }}
-                  className="px-2 h-8"
+                  className="px-2 h-8 text-gray-300 hover:bg-gray-700"
                 >
                   <Link className="w-4 h-4" />
                 </Button>
@@ -323,36 +323,48 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
               <div className="space-y-4">
                 <div>
-                  <Label>Message</Label>
+                  <Label className="text-gray-300">Message</Label>
                   <textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type your scheduled message..."
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[100px] resize-none"
+                    className="flex w-full rounded-lg border border-gray-600 bg-[#374151] px-4 py-3 text-sm min-h-[100px] resize-none text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Start Date & Time</Label>
+                    <Label className="text-gray-300">Start Date & Time</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-start text-left font-normal"
+                          className="w-full justify-start text-left font-normal bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
                         >
                           <Clock className="mr-2 h-4 w-4" />
                           {format(startDate, "PPP p")}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0 bg-[#2d3748] border-gray-600">
                         <Calendar
                           mode="single"
                           selected={startDate}
                           onSelect={(date) => date && setStartDate(date)}
                           initialFocus
+                          className="bg-[#2d3748] text-white"
+                          classNames={{
+                            day_selected: "bg-blue-500 text-white hover:bg-blue-600",
+                            day: "text-gray-300 hover:bg-gray-700",
+                            day_today: "bg-gray-700 text-white",
+                            head_cell: "text-gray-400",
+                            cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-blue-500 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
+                            nav_button: "bg-transparent text-gray-400 hover:bg-gray-700",
+                            nav_button_previous: "absolute left-1",
+                            nav_button_next: "absolute right-1",
+                            caption: "flex justify-center pt-1 relative items-center text-gray-300",
+                          }}
                         />
-                        <div className="p-3 border-t">
+                        <div className="p-3 border-t border-gray-600">
                           <Input
                             type="time"
                             value={format(startDate, "HH:mm")}
@@ -363,6 +375,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                               newDate.setMinutes(parseInt(minutes))
                               setStartDate(newDate)
                             }}
+                            className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
                       </PopoverContent>
@@ -370,13 +383,13 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                   </div>
 
                   <div>
-                    <Label>Interval (minutes)</Label>
+                    <Label className="text-gray-300">Interval (minutes)</Label>
                     <Input
                       type="number"
                       value={interval}
                       onChange={(e) => setInterval(e.target.value)}
                       min="1"
-                      className="w-full"
+                      className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -393,7 +406,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                       type="button"
                       variant="outline"
                       onClick={() => document.getElementById('media')?.click()}
-                      className="w-full"
+                      className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
                     >
                       <FiUpload className="w-4 h-4 mr-2" />
                       {mediaFile ? mediaFile.name : 'Upload Media'}
@@ -402,7 +415,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting || (!newMessage && !mediaFile)}
-                    className="px-8"
+                    className="px-8 bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600"
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -420,25 +433,25 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
         <div className="space-y-3">
           {messages.length === 0 ? (
-            <div className="text-center py-10 bg-card/30 rounded-lg border border-border">
-              <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-foreground/70">No scheduled messages</p>
-              <p className="text-sm text-muted-foreground mt-1">Create your first scheduled post above</p>
+            <div className="text-center py-10 bg-[#2d3748] rounded-lg border border-gray-700">
+              <Clock className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-300">No scheduled messages</p>
+              <p className="text-sm text-gray-400 mt-1">Create your first scheduled post above</p>
             </div>
           ) : (
             messages.map((message) => (
-              <Card key={message.id} className="border border-input/10">
+              <Card key={message.id} className="bg-[#2d3748] border-gray-700">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-primary shrink-0 mt-1" />
+                    <Clock className="w-5 h-5 text-blue-500 shrink-0 mt-1" />
                     <div className="flex-grow">
                       {message.message_text && (
-                        <p className="text-foreground whitespace-pre-wrap">{message.message_text}</p>
+                        <p className="text-white whitespace-pre-wrap">{message.message_text}</p>
                       )}
                       {message.media && (
-                        <p className="text-sm text-foreground/70 mt-1">Contains media</p>
+                        <p className="text-sm text-gray-400 mt-1">Contains media</p>
                       )}
-                      <div className="flex items-center gap-2 mt-2 text-sm text-foreground/70">
+                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-400">
                         <p>Starts: {format(new Date(message.starting_at * 1000), "PPP p")}</p>
                         <span>•</span>
                         <p>Interval: {message.interval} minutes</p>
@@ -451,7 +464,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(message)}
-                        className="h-8 w-8"
+                        className="h-8 w-8 text-gray-300 hover:bg-gray-700"
                       >
                         <FiEdit2 className="h-4 w-4" />
                       </Button>
@@ -459,7 +472,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(message.id)}
-                        className="h-8 w-8 text-destructive"
+                        className="h-8 w-8 text-red-400 hover:bg-gray-700"
                       >
                         <FiTrash2 className="h-4 w-4" />
                       </Button>
