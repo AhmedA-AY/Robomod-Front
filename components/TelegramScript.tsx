@@ -3,16 +3,5 @@
 import Script from 'next/script'
 
 export default function TelegramScript() {
-  return (
-    <Script 
-      src="https://telegram.org/js/telegram-web-app.js"
-      strategy="beforeInteractive"
-      onError={(e) => {
-        console.error('Failed to load Telegram WebApp script:', e);
-      }}
-      onLoad={() => {
-        console.log('Telegram WebApp script loaded successfully');
-      }}
-    />
-  )
+  return null
 } 

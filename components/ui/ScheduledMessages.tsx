@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Plus, Image, Loader2, Bold, Italic, Code, Link } from 'lucide-react'
-import { FiEdit2, FiTrash2 } from 'react-icons/fi'
+import { Clock, Loader2, Bold, Italic, Code, Link } from 'lucide-react'
+import { FiEdit2, FiTrash2, FiUpload } from 'react-icons/fi'
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
@@ -318,7 +318,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                       onClick={() => document.getElementById('media')?.click()}
                       className="w-full"
                     >
-                      <Image className="w-4 h-4 mr-2" />
+                      <FiUpload className="w-4 h-4 mr-2" />
                       {mediaFile ? mediaFile.name : 'Upload Media'}
                     </Button>
                   </div>
