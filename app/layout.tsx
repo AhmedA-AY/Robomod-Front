@@ -20,8 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <head>
         <TelegramScript />
+      </head>
+      <body className={inter.className}>
         <TelegramThemeProvider />
         <ChatProvider>
           <ClientLayout>{children}</ClientLayout>
