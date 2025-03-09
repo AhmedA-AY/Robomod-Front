@@ -148,112 +148,130 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="border border-input/10">
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-2 mb-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => insertFormatting('bold')}
-                className="px-2"
-              >
-                <Bold className="w-4 h-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => insertFormatting('italic')}
-                className="px-2"
-              >
-                <Italic className="w-4 h-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => insertFormatting('code')}
-                className="px-2"
-              >
-                <Code className="w-4 h-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => insertFormatting('link')}
-                className="px-2"
-              >
-                <Link className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex gap-4">
-              <Textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your scheduled message..."
-                className="flex-grow min-h-[100px] bg-black/5"
-              />
-              <div className="flex flex-col gap-2">
-                <input
-                  type="file"
-                  id="media"
-                  className="hidden"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMediaFile(e.target.files?.[0] || null)}
-                />
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b border-border">
+        <h2 className="text-lg font-medium">Scheduled Messages</h2>
+        <p className="text-sm text-muted-foreground">Create and manage scheduled posts</p>
+      </div>
+
+      <div className="flex-1 overflow-auto p-4">
+        <Card className="border border-input/10 mb-6">
+          <CardContent className="p-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex gap-2 mb-2">
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById('media')?.click()}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertFormatting('bold')}
+                  className="px-2 h-8"
                 >
-                  <ImageIcon className="w-4 h-4" />
+                  <Bold className="w-4 h-4" />
                 </Button>
-                <Button type="submit" disabled={isSubmitting || (!newMessage && !mediaFile)}>
-                  {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Plus className="w-4 h-4" />
-                  )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertFormatting('italic')}
+                  className="px-2 h-8"
+                >
+                  <Italic className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertFormatting('code')}
+                  className="px-2 h-8"
+                >
+                  <Code className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertFormatting('link')}
+                  className="px-2 h-8"
+                >
+                  <Link className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
-            {mediaFile && (
-              <p className="text-sm text-foreground/70">
-                Selected file: {mediaFile.name}
-              </p>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-4">
-        {messages.length === 0 ? (
-          <p className="text-center text-foreground/70">No scheduled messages</p>
-        ) : (
-          messages.map((message) => (
-            <Card key={message.id} className="border border-input/10">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-4">
-                  <Clock className="w-5 h-5 text-primary shrink-0 mt-1" />
-                  <div className="flex-grow">
-                    {message.message_text && (
-                      <p className="text-foreground">{message.message_text}</p>
+              <div className="flex gap-4">
+                <Textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your scheduled message..."
+                  className="flex-grow min-h-[80px] max-h-[120px] bg-background resize-none"
+                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="file"
+                    id="media"
+                    className="hidden"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMediaFile(e.target.files?.[0] || null)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('media')?.click()}
+                    className="h-9 w-9 p-0"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting || (!newMessage && !mediaFile)}
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
                     )}
-                    {message.media && (
-                      <p className="text-sm text-foreground/70">Contains media</p>
-                    )}
-                    <p className="text-sm text-foreground/70 mt-1">
-                      Scheduled for: {new Date(message.scheduled_time).toLocaleString()}
-                    </p>
-                  </div>
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
+              </div>
+              {mediaFile && (
+                <p className="text-sm text-foreground/70">
+                  Selected file: {mediaFile.name}
+                </p>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-3">
+          {messages.length === 0 ? (
+            <div className="text-center py-10 bg-card/30 rounded-lg border border-border">
+              <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-foreground/70">No scheduled messages</p>
+              <p className="text-sm text-muted-foreground mt-1">Create your first scheduled post above</p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <Card key={message.id} className="border border-input/10">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-primary shrink-0 mt-1" />
+                    <div className="flex-grow">
+                      {message.message_text && (
+                        <p className="text-foreground">{message.message_text}</p>
+                      )}
+                      {message.media && (
+                        <p className="text-sm text-foreground/70">Contains media</p>
+                      )}
+                      <p className="text-sm text-foreground/70 mt-1">
+                        Scheduled for: {new Date(message.scheduled_time).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

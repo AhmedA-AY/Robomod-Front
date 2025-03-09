@@ -110,25 +110,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }, [])
 
   if (selectedChat) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="min-h-screen bg-background"
-      >
-        <div className="container mx-auto py-4 px-4 sm:px-6">
-          <div className="space-y-4">
-            {children}
-          </div>
-        </div>
-      </motion.div>
-    )
+    return children; // Let the Home component handle everything
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
         <p className="text-foreground/70 text-lg">Loading your chats...</p>
       </div>
@@ -137,7 +124,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+      <div className="h-screen w-full flex flex-col items-center justify-center p-6 text-center bg-background">
         <div className="bg-destructive/10 p-6 rounded-lg max-w-md">
           <p className="text-destructive font-medium text-lg mb-2">Error</p>
           <p className="text-foreground/90">{error}</p>
@@ -148,7 +135,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   if (chats.length === 0) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+      <div className="h-screen w-full flex flex-col items-center justify-center p-6 text-center bg-background">
         <div className="bg-secondary/50 p-8 rounded-lg max-w-md">
           <h2 className="text-xl font-semibold mb-4">No Groups or Channels Found</h2>
           <p className="text-foreground/70">Make sure Robomod is added as an admin to your groups or channels.</p>
@@ -158,20 +145,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen bg-background"
-    >
-      <div className="container mx-auto py-6 px-4 sm:px-6">
-        <div className="space-y-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-primary mb-2">Robomod</h1>
-            <p className="text-foreground/70">Select a group or channel to manage</p>
-          </div>
-          
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="h-screen w-full overflow-hidden bg-background">
+      <div className="h-full flex flex-col">
+        <div className="text-center py-6 px-4">
+          <h1 className="text-3xl font-bold text-primary mb-2">Robomod</h1>
+          <p className="text-foreground/70">Select a group or channel to manage</p>
+        </div>
+        
+        <div className="flex-1 overflow-auto px-4 pb-5">
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
             {chats.map((chat, index) => (
               <motion.div 
                 key={chat.id}
@@ -203,6 +185,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

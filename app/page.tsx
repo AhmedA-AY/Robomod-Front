@@ -57,15 +57,15 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
       <motion.div 
         initial={false}
         animate={{ width: isSidebarOpen || window.innerWidth >= 768 ? '20rem' : '0rem' }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-card h-full border-r border-border overflow-hidden flex flex-col z-20"
+        className="h-screen bg-card border-r border-border overflow-hidden flex flex-col z-20"
       >
-        <div className="p-6 border-b border-border">
+        <div className="p-5 border-b border-border">
           <div className="flex items-center gap-3">
             <Avatar>
               <div className="bg-primary/10 w-full h-full flex items-center justify-center">
@@ -107,17 +107,11 @@ export default function Home() {
             ))}
           </div>
         </nav>
-        
-        <div className="p-4 border-t border-border">
-          <Button variant="ghost" className="w-full justify-start">
-            Settings
-          </Button>
-        </div>
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-background">
-        <header className="h-16 border-b border-border flex items-center gap-2 px-4 bg-card/50">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-background">
+        <header className="h-16 min-h-16 border-b border-border flex items-center gap-2 px-4 bg-card/50">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -144,25 +138,27 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="flex-1 overflow-auto p-4"
+            className="flex-1 overflow-hidden"
           >
             {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
             {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
             {activeTab !== 'ai' && activeTab !== 'scheduled' && (
-              <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl mx-auto border border-border">
-                <div className="flex flex-col items-center justify-center text-center gap-4">
-                  <div className={`p-4 rounded-full ${tabs.find(tab => tab.id === activeTab)?.color} bg-background/50`}>
-                    {tabs.find(tab => tab.id === activeTab)?.icon}
+              <div className="h-full flex items-center justify-center p-4">
+                <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl border border-border">
+                  <div className="flex flex-col items-center justify-center text-center gap-4">
+                    <div className={`p-4 rounded-full ${tabs.find(tab => tab.id === activeTab)?.color} bg-background/50`}>
+                      {tabs.find(tab => tab.id === activeTab)?.icon}
+                    </div>
+                    <h3 className="text-xl font-medium">
+                      {tabs.find(tab => tab.id === activeTab)?.label} Feature
+                    </h3>
+                    <p className="text-muted-foreground max-w-md">
+                      This feature will let you manage {tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()} for {selectedChat.title}.
+                    </p>
+                    <Button className="mt-2">
+                      Configure {tabs.find(tab => tab.id === activeTab)?.label}
+                    </Button>
                   </div>
-                  <h3 className="text-xl font-medium">
-                    {tabs.find(tab => tab.id === activeTab)?.label} Feature
-                  </h3>
-                  <p className="text-muted-foreground max-w-md">
-                    This feature will let you manage {tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()} for {selectedChat.title}.
-                  </p>
-                  <Button className="mt-4">
-                    Configure {tabs.find(tab => tab.id === activeTab)?.label}
-                  </Button>
                 </div>
               </div>
             )}
