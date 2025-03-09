@@ -1,33 +1,19 @@
 "use client"
 
 import * as React from "react"
-import { DayPicker, DayClickEventHandler } from "react-day-picker"
+import { DayPicker } from "react-day-picker"
 import { cn } from "@/lib/utils"
 
-interface TelegramCalendarProps extends Omit<React.ComponentProps<typeof DayPicker>, 'mode' | 'selected' | 'onSelect'> {
-  selected?: Date;
-  onSelect?: (date: Date) => void;
-}
+export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
 export function TelegramCalendar({
   className,
   classNames,
   showOutsideDays = true,
-  selected,
-  onSelect,
   ...props
-}: TelegramCalendarProps) {
-  const handleSelect: DayClickEventHandler = (day, modifiers) => {
-    if (onSelect && !modifiers.disabled && day) {
-      onSelect(day);
-    }
-  };
-
+}: CalendarProps) {
   return (
     <DayPicker
-      mode="single"
-      selected={selected}
-      onDayClick={handleSelect}
       showOutsideDays={showOutsideDays}
       className={cn("p-0", className)}
       classNames={{
