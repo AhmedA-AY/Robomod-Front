@@ -3,16 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Loader2, Bold, Italic, Code, Link } from 'lucide-react'
-import { FiEdit2, FiTrash2, FiUpload } from 'react-icons/fi'
+import { Clock, Loader2 } from 'lucide-react'
+import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { DateTimePicker } from "@/components/ui/DateTimePicker"
 import { ScheduleForm } from "@/components/ui/ScheduleForm"
 
 interface ScheduledMessage {

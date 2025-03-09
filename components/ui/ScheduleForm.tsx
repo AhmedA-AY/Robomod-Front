@@ -11,6 +11,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Clock, Loader2 } from 'lucide-react'
 import { FiUpload } from 'react-icons/fi'
 
+interface ScheduledMessage {
+  id: string;
+  message_text?: string;
+  media?: string;
+  starting_at: number;
+  interval: number;
+  enabled: boolean;
+}
+
 interface ScheduleFormProps {
   startDate: Date
   setStartDate: (date: Date) => void
@@ -21,7 +30,7 @@ interface ScheduleFormProps {
   mediaFile: File | null
   setMediaFile: (file: File | null) => void
   isSubmitting: boolean
-  editingMessage: any
+  editingMessage: ScheduledMessage | null
   onSubmit: (e: React.FormEvent) => void
 }
 
