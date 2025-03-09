@@ -61,12 +61,27 @@ export default function Home() {
       {/* Sidebar */}
       <motion.div 
         initial={false}
-        animate={{ width: isSidebarOpen || window.innerWidth >= 768 ? '20rem' : '0rem' }}
+        animate={{ 
+          width: isSidebarOpen ? '100%' : window.innerWidth >= 768 ? '20rem' : '0rem',
+          position: window.innerWidth < 768 ? 'fixed' : 'relative',
+          left: 0,
+          top: 0,
+          height: '100%',
+          zIndex: 50
+        }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="h-screen bg-card border-r border-border overflow-hidden flex flex-col z-20"
+        className="h-screen bg-card border-r border-border overflow-hidden flex flex-col"
       >
         <div className="p-5 border-b border-border">
           <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleSidebar} 
+              className="md:hidden absolute right-4 top-4"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <Avatar>
               <div className="bg-primary/10 w-full h-full flex items-center justify-center">
                 <MessageSquare className="h-6 w-6 text-primary" />

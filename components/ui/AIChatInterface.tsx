@@ -56,7 +56,7 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
           <div className="p-2 bg-primary/10 rounded-full">
             <MessageSquare className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="font-medium">AI Assistant</h3>
+          <h3 className="font-medium">Robo Assistant</h3>
         </div>
       </div>
       
