@@ -2,9 +2,11 @@
 
 import { createContext, useContext, useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { MessageCircle, Command, Puzzle, HelpCircle, Trophy, Shield, Video, Users, Globe, Calendar, MessageSquare, Menu } from 'lucide-react'
+import { Avatar } from "@/components/ui/avatar"
+import { MessageCircle, MessageSquare, Menu } from 'lucide-react'
 import AIChatInterface from '@/components/ui/AIChatInterface'
 import ScheduledMessages from '@/components/ui/ScheduledMessages'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Chat {
   id: number;
@@ -41,20 +43,11 @@ export function useChatContext() {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('ai')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const { selectedChat } = useChatContext()
+  const { selectedChat, setSelectedChat } = useChatContext()
 
   const tabs = [
-    { id: 'ai', label: 'AI', icon: <MessageCircle className="w-4 h-4" /> },
-    { id: 'commands', label: 'Commands', icon: <Command className="w-4 h-4" /> },
-    { id: 'extensions', label: 'Extensions', icon: <Puzzle className="w-4 h-4" /> },
-    { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
-    { id: 'gamification', label: 'Gamification', icon: <Trophy className="w-4 h-4" /> },
-    { id: 'gating', label: 'Gating', icon: <Shield className="w-4 h-4" /> },
-    { id: 'livestream', label: 'Live Stream', icon: <Video className="w-4 h-4" /> },
-    { id: 'moderators', label: 'Moderators', icon: <Users className="w-4 h-4" /> },
-    { id: 'portal', label: 'Portal', icon: <Globe className="w-4 h-4" /> },
-    { id: 'scheduled', label: 'Scheduled Posts', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'salutations', label: 'Salutations', icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'ai', label: 'AI Assistant', icon: <MessageCircle className="w-5 h-5" />, color: 'text-blue-500' },
+    { id: 'scheduled', label: 'Scheduled Posts', icon: <MessageSquare className="w-5 h-5" />, color: 'text-emerald-500' },
   ]
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
@@ -64,58 +57,117 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
-      <div className={`bg-background border-r border-input/10 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0'} md:w-64 overflow-hidden`}>
-        <nav className="space-y-0.5 px-2 py-4">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-              className={`w-full justify-start text-foreground/80 hover:text-foreground ${
-                activeTab === tab.id ? 'bg-background/50 text-foreground' : ''
-              }`}
-              onClick={() => {
-                setActiveTab(tab.id)
-                if (window.innerWidth < 768) {
-                  setIsSidebarOpen(false)
-                }
-              }}
-            >
-              {tab.icon}
-              <span className="ml-2 font-medium">{tab.label}</span>
-            </Button>
-          ))}
+      <motion.div 
+        initial={false}
+        animate={{ width: isSidebarOpen || window.innerWidth >= 768 ? '20rem' : '0rem' }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="bg-card h-full border-r border-border overflow-hidden flex flex-col z-20"
+      >
+        <div className="p-6 border-b border-border">
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <div className="bg-primary/10 w-full h-full flex items-center justify-center">
+                <MessageSquare className="h-6 w-6 text-primary" />
+              </div>
+            </Avatar>
+            <div className="overflow-hidden">
+              <h2 className="font-semibold text-lg truncate">{selectedChat.title}</h2>
+              <p className="text-sm text-muted-foreground capitalize">{selectedChat.type.replace('super', '')}</p>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full mt-4"
+            onClick={() => setSelectedChat(null)}
+          >
+            Change Chat
+          </Button>
+        </div>
+        
+        <nav className="flex-1 overflow-y-auto p-2">
+          <div className="space-y-1">
+            {tabs.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? 'secondary' : 'ghost'}
+                className={`w-full justify-start text-left h-12 ${activeTab === tab.id ? 'bg-secondary' : ''}`}
+                onClick={() => {
+                  setActiveTab(tab.id)
+                  if (window.innerWidth < 768) {
+                    setIsSidebarOpen(false)
+                  }
+                }}
+              >
+                <span className={`mr-3 ${tab.color}`}>{tab.icon}</span>
+                <span className="font-medium">{tab.label}</span>
+              </Button>
+            ))}
+          </div>
         </nav>
-      </div>
+        
+        <div className="p-4 border-t border-border">
+          <Button variant="ghost" className="w-full justify-start">
+            Settings
+          </Button>
+        </div>
+      </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-background">
-        <header className="border-b border-input/10 p-6 flex items-center gap-4 bg-background">
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
+        <header className="h-16 border-b border-border flex items-center gap-2 px-4 bg-card/50">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar} 
-            className="md:hidden hover:bg-background/50"
+            className="md:hidden"
           >
             <Menu className="h-5 w-5" />
           </Button>
+          
           <div className="flex items-center gap-3">
-            {tabs.find(tab => tab.id === activeTab)?.icon}
-            <h2 className="text-xl font-semibold text-foreground/90">
+            <span className={`${tabs.find(tab => tab.id === activeTab)?.color}`}>
+              {tabs.find(tab => tab.id === activeTab)?.icon}
+            </span>
+            <h1 className="font-semibold text-lg">
               {tabs.find(tab => tab.id === activeTab)?.label}
-            </h2>
+            </h1>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto bg-background">
-          {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
-          {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
-          {activeTab !== 'ai' && activeTab !== 'scheduled' && (
-            <div className="text-foreground/80 space-y-4 max-w-4xl mx-auto">
-              <p>Content for {tabs.find(tab => tab.id === activeTab)?.label} goes here.</p>
-            </div>
-          )}
-        </main>
+        
+        <AnimatePresence mode="wait">
+          <motion.main 
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 overflow-auto p-4"
+          >
+            {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
+            {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
+            {activeTab !== 'ai' && activeTab !== 'scheduled' && (
+              <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl mx-auto border border-border">
+                <div className="flex flex-col items-center justify-center text-center gap-4">
+                  <div className={`p-4 rounded-full ${tabs.find(tab => tab.id === activeTab)?.color} bg-background/50`}>
+                    {tabs.find(tab => tab.id === activeTab)?.icon}
+                  </div>
+                  <h3 className="text-xl font-medium">
+                    {tabs.find(tab => tab.id === activeTab)?.label} Feature
+                  </h3>
+                  <p className="text-muted-foreground max-w-md">
+                    This feature will let you manage {tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()} for {selectedChat.title}.
+                  </p>
+                  <Button className="mt-4">
+                    Configure {tabs.find(tab => tab.id === activeTab)?.label}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </motion.main>
+        </AnimatePresence>
       </div>
     </div>
   )

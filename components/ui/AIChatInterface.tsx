@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
 import { MessageSquare } from "lucide-react"
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface AIChatInterfaceProps {
   chatId?: number;
@@ -12,6 +13,16 @@ interface AIChatInterfaceProps {
 export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
+  const [isTyping, setIsTyping] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const handleSendMessage = () => {
     if (!message.trim()) return
@@ -21,8 +32,12 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
     setMessages(newMessages)
     setMessage('')
     
-    // Simulate AI response
+    // Simulate AI typing
+    setIsTyping(true)
+    
+    // Simulate AI response with a more natural delay
     setTimeout(() => {
+      setIsTyping(false)
       setMessages([
         ...newMessages,
         { 
@@ -30,51 +45,100 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
           content: `This is a simulated response for chat ID: ${chatId || 'unknown'}. In a real implementation, this would call an API with the chat ID.` 
         }
       ])
-    }, 1000)
+    }, 1500)
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full rounded-xl border border-border overflow-hidden bg-card/30">
+      {/* Chat header */}
+      <div className="border-b border-border p-4 flex items-center justify-between bg-card/50">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-primary/10 rounded-full">
+            <MessageSquare className="h-5 w-5 text-primary" />
+          </div>
+          <h3 className="font-medium">AI Assistant</h3>
+        </div>
+        <div className="text-sm text-muted-foreground">Chat ID: {chatId}</div>
+      </div>
+      
+      {/* Messages container */}
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="text-center text-foreground/70 py-8">
-            <p>Start a conversation with the AI assistant</p>
+          <div className="h-full flex flex-col items-center justify-center text-center p-6">
+            <div className="p-4 bg-primary/10 rounded-full mb-4">
+              <MessageSquare className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-medium mb-2">AI Assistant</h3>
+            <p className="text-muted-foreground max-w-md">
+              Start chatting with the AI assistant. Ask any questions about managing your group or channel.
+            </p>
           </div>
         ) : (
-          messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`p-3 rounded-lg max-w-[80%] ${
-                msg.role === 'user' 
-                  ? 'bg-primary text-primary-foreground ml-auto' 
-                  : 'bg-secondary text-secondary-foreground'
-              }`}
-            >
-              {msg.content}
-            </div>
-          ))
+          <>
+            <AnimatePresence>
+              {messages.map((msg, index) => (
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    msg.role === 'user' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-secondary text-secondary-foreground'
+                  }`}>
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {isTyping && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-start"
+              >
+                <div className="bg-secondary text-secondary-foreground rounded-2xl px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
-      <div className="border-t border-input p-4">
-        <div className="flex gap-2">
-          <Textarea
-            value={message}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="resize-none"
-            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSendMessage()
-              }
-            }}
-          />
+      
+      {/* Input area */}
+      <div className="border-t border-border p-3">
+        <div className="flex gap-2 items-end">
+          <div className="flex-1 bg-background rounded-lg overflow-hidden border border-input focus-within:ring-1 focus-within:ring-primary">
+            <Textarea
+              value={message}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="min-h-[60px] max-h-[200px] resize-none border-0 focus-visible:ring-0 py-3 px-4"
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendMessage()
+                }
+              }}
+            />
+          </div>
           <Button 
             onClick={handleSendMessage} 
             size="icon" 
-            className="shrink-0"
+            className="rounded-full h-12 w-12 shrink-0"
           >
-            <MessageSquare className="h-4 w-4" />
+            <MessageSquare className="h-5 w-5" />
           </Button>
         </div>
       </div>
