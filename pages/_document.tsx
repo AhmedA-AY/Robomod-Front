@@ -6,7 +6,9 @@ export default function Document() {
       <Head>
         <script
           src="https://telegram.org/js/telegram-web-app.js"
-          async
+          defer={false}
+          async={false}
+          type="text/javascript"
         />
       </Head>
       <body>

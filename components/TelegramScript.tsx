@@ -6,7 +6,14 @@ export default function TelegramScript() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    
     const checkTelegramApp = () => {
+      // Allow development mode without Telegram
+      if (isDevelopment) {
+        return
+      }
+
       if (!window.Telegram?.WebApp) {
         setError('This app must be opened from Telegram')
         return
@@ -14,26 +21,38 @@ export default function TelegramScript() {
       
       try {
         // Try to access Telegram WebApp properties
-        const { initData, initDataUnsafe } = window.Telegram.WebApp
-        if (!initData || !initDataUnsafe) {
+        const webApp = window.Telegram.WebApp
+        if (!webApp.initData || !webApp.initDataUnsafe) {
           setError('Invalid Telegram Web App initialization')
+          return
         }
+
+        // Initialize WebApp
+        // @ts-ignore - Telegram WebApp methods
+        webApp.ready?.()
+        // @ts-ignore - Telegram WebApp methods
+        webApp.expand?.()
       } catch (error) {
         console.error('Telegram Web App initialization error:', error)
         setError('Failed to initialize Telegram Web App')
       }
     }
 
-    // Check immediately
+    // Initial check
     checkTelegramApp()
 
-    // Also check after a short delay to ensure script has loaded
-    const timeoutId = setTimeout(checkTelegramApp, 1000)
-
-    return () => clearTimeout(timeoutId)
+    // Retry a few times with increasing delays
+    const retryTimes = [100, 500, 1000, 2000]
+    retryTimes.forEach((delay) => {
+      setTimeout(() => {
+        if (!window.Telegram?.WebApp && !isDevelopment) {
+          checkTelegramApp()
+        }
+      }, delay)
+    })
   }, [])
 
-  if (error) {
+  if (error && process.env.NODE_ENV !== 'development') {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="bg-destructive/10 p-6 rounded-lg max-w-md text-center">
