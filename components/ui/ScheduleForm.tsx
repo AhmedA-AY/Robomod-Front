@@ -2,14 +2,13 @@
 
 import * as React from "react"
 import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Clock, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { FiUpload } from 'react-icons/fi'
+import { TelegramDatePicker } from "@/components/ui/TelegramDatePicker"
 
 interface ScheduledMessage {
   id: string;
@@ -50,57 +49,11 @@ export function ScheduleForm({
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-4">
-        <div className="relative">
-          <Label className="text-gray-300">Start Date & Time</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
-              >
-                <Clock className="mr-2 h-4 w-4" />
-                {format(startDate, "PPP p")}
-              </Button>
-            </PopoverTrigger>
-            <div className="relative">
-              <PopoverContent 
-                className="absolute z-[9999] w-auto p-0 bg-[#2d3748] border-gray-600" 
-                align="start"
-                side="bottom"
-                sideOffset={5}
-              >
-                <div className="w-[280px]">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={(date) => date && setStartDate(date)}
-                    initialFocus
-                    className="p-0"
-                    styles={{
-                      caption: { color: 'white' },
-                      day_today: { backgroundColor: '#374151' },
-                      day_selected: { backgroundColor: '#3B82F6' },
-                    }}
-                  />
-                  <div className="p-3 border-t border-gray-600">
-                    <Input
-                      type="time"
-                      value={format(startDate, "HH:mm")}
-                      onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':')
-                        const newDate = new Date(startDate)
-                        newDate.setHours(parseInt(hours))
-                        newDate.setMinutes(parseInt(minutes))
-                        setStartDate(newDate)
-                      }}
-                      className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </PopoverContent>
-            </div>
-          </Popover>
-        </div>
+        <TelegramDatePicker
+          date={startDate}
+          setDate={setStartDate}
+          label="Start Date & Time"
+        />
 
         <div>
           <Label className="text-gray-300">Interval (minutes)</Label>
