@@ -70,7 +70,7 @@ export default function Home() {
           zIndex: 50
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="h-screen bg-card border-r border-border overflow-hidden flex flex-col"
+        className="h-screen bg-card overflow-hidden flex flex-col"
       >
         <div className="p-5 border-b border-border">
           <div className="flex items-center gap-3">
