@@ -62,40 +62,43 @@ export function ScheduleForm({
                 {format(startDate, "PPP p")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-auto p-0 bg-[#2d3748] border-gray-600" 
-              align="start"
-              side="bottom"
-              sideOffset={5}
-              style={{ 
-                position: 'fixed',
-                zIndex: 1001,
-                maxHeight: 'calc(100vh - 100px)',
-                overflowY: 'auto'
-              }}
-            >
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={(date) => date && setStartDate(date)}
-                initialFocus
-                className="rounded-t-md"
-              />
-              <div className="p-3 border-t border-gray-600">
-                <Input
-                  type="time"
-                  value={format(startDate, "HH:mm")}
-                  onChange={(e) => {
-                    const [hours, minutes] = e.target.value.split(':')
-                    const newDate = new Date(startDate)
-                    newDate.setHours(parseInt(hours))
-                    newDate.setMinutes(parseInt(minutes))
-                    setStartDate(newDate)
-                  }}
-                  className="bg-[#374151] border-gray-600 text-white"
-                />
-              </div>
-            </PopoverContent>
+            <div className="relative">
+              <PopoverContent 
+                className="absolute z-[9999] w-auto p-0 bg-[#2d3748] border-gray-600" 
+                align="start"
+                side="bottom"
+                sideOffset={5}
+              >
+                <div className="w-[280px]">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => date && setStartDate(date)}
+                    initialFocus
+                    className="p-0"
+                    styles={{
+                      caption: { color: 'white' },
+                      day_today: { backgroundColor: '#374151' },
+                      day_selected: { backgroundColor: '#3B82F6' },
+                    }}
+                  />
+                  <div className="p-3 border-t border-gray-600">
+                    <Input
+                      type="time"
+                      value={format(startDate, "HH:mm")}
+                      onChange={(e) => {
+                        const [hours, minutes] = e.target.value.split(':')
+                        const newDate = new Date(startDate)
+                        newDate.setHours(parseInt(hours))
+                        newDate.setMinutes(parseInt(minutes))
+                        setStartDate(newDate)
+                      }}
+                      className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </div>
           </Popover>
         </div>
 
