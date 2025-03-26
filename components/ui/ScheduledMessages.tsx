@@ -59,18 +59,25 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         return
       }
 
-      const response = await fetch(`https://robomod.dablietech.club/api/scheduled_messages?chat_id=${chatId}`, {
+      // Construct the URL with query parameters
+      const url = new URL('https://robomod.dablietech.club/api/scheduled_messages')
+      url.searchParams.append('chat_id', chatId)
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
+          'Content-Type': 'application/json',
         },
       })
       
       if (!response.ok) {
-        throw new Error('Failed to fetch scheduled messages')
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || 'Failed to fetch scheduled messages')
       }
 
       const data = await response.json()
-      // Ensure data.messages exists and is an array, otherwise use empty array
+      // Ensure data is an array, otherwise use empty array
       setMessages(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching scheduled messages:', error)
@@ -113,24 +120,23 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
 
-      // Build query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
-      params.append('starting_at', startingAt.toString())
-      params.append('interval', intervalSeconds.toString())
-      
-      if (editingMessage) {
-        params.append('schedule_id', editingMessage.id)
-      }
-
-      // Build the URL with query parameters
-      const baseUrl = editingMessage 
+      // Construct the URL with query parameters
+      const url = new URL(editingMessage 
         ? 'https://robomod.dablietech.club/api/edit_scheduled_message'
         : 'https://robomod.dablietech.club/api/add_scheduled_message'
+      )
+
+      // Add required query parameters
+      url.searchParams.append('chat_id', chatId)
+      url.searchParams.append('starting_at', startingAt.toString())
+      url.searchParams.append('interval', intervalSeconds.toString())
       
-      const url = `${baseUrl}?${params.toString()}`
+      // Add schedule_id only for edit operation
+      if (editingMessage) {
+        url.searchParams.append('schedule_id', editingMessage.id)
+      }
       
-      // Create form data for the message content only
+      // Create form data for the message content
       const formData = new FormData()
       if (newMessage) {
         formData.append('message_text', newMessage)
@@ -139,9 +145,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         formData.append('media', mediaFile)
       }
 
-      console.log('Submitting to URL:', url)
-      
-      const response = await fetch(url, {
+      const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -153,7 +157,10 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         const errorText = await response.text()
         console.error('API Error Response:', errorText)
         
-        let errorMessage = 'Failed to schedule message'
+        let errorMessage = editingMessage 
+          ? 'Failed to edit scheduled message'
+          : 'Failed to add scheduled message'
+        
         try {
           const errorData = JSON.parse(errorText)
           errorMessage = errorData.detail?.[0]?.msg || errorData.detail || errorData.message || errorMessage
@@ -188,20 +195,17 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      const formData = new FormData()
-      formData.append('chat_id', chatId)
-      formData.append('schedule_id', scheduleId)
+      // Construct the URL with query parameters
+      const url = new URL('https://robomod.dablietech.club/api/delete_scheduled_message')
+      url.searchParams.append('chat_id', chatId)
+      url.searchParams.append('schedule_id', scheduleId)
 
-      const response = await fetch(
-        'https://robomod.dablietech.club/api/delete_scheduled_message',
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-          },
-          body: formData,
-        }
-      )
+      const response = await fetch(url.toString(), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`,
+        },
+      })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
@@ -242,15 +246,15 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#1f2937] text-white">
-      <div className="p-4 border-b border-gray-700">
-        <h2 className="text-lg font-medium">Scheduled Messages</h2>
-        <p className="text-sm text-gray-400">Create and manage scheduled posts</p>
+    <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+      <div className="p-6 border-b border-gray-700/50">
+        <h2 className="text-2xl font-semibold tracking-tight">Scheduled Messages</h2>
+        <p className="text-sm text-gray-400 mt-1">Create and manage automated posts</p>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
-        <Card className="bg-[#2d3748] border-gray-700 mb-6">
-          <CardContent className="p-4">
+      <div className="flex-1 overflow-auto p-6">
+        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm mb-8 shadow-xl">
+          <CardContent className="p-6">
             <ScheduleForm
               startDate={startDate}
               setStartDate={setStartDate}
@@ -267,40 +271,55 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
           </CardContent>
         </Card>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center py-10 bg-[#2d3748] rounded-lg border border-gray-700">
-              <Clock className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-300">No scheduled messages</p>
-              <p className="text-sm text-gray-400 mt-1">Create your first scheduled post above</p>
+            <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700/50 backdrop-blur-sm">
+              <div className="bg-blue-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-8 h-8 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-medium text-white mb-2">No Scheduled Messages</h3>
+              <p className="text-gray-400 max-w-sm mx-auto">Create your first scheduled post to start automating your content delivery</p>
             </div>
           ) : (
             messages.map((message) => (
-              <Card key={message.id} className="bg-[#2d3748] border-gray-700">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-blue-500 shrink-0 mt-1" />
-                    <div className="flex-grow">
+              <Card key={message.id} className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm hover:bg-gray-800/70 transition-colors">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-500/10 p-2 rounded-lg shrink-0">
+                      <Clock className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div className="flex-grow min-w-0">
                       {message.message_text && (
-                        <p className="text-white whitespace-pre-wrap">{message.message_text}</p>
+                        <p className="text-white whitespace-pre-wrap text-sm leading-relaxed">{message.message_text}</p>
                       )}
                       {message.media && (
-                        <p className="text-sm text-gray-400 mt-1">Contains media</p>
+                        <div className="flex items-center gap-2 mt-2 text-sm text-blue-400">
+                          <span className="bg-blue-500/10 px-2 py-1 rounded-full">Contains media</span>
+                        </div>
                       )}
-                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-400">
-                        <p>Starts: {format(new Date(message.starting_at * 1000), "PPP p")}</p>
-                        <span>•</span>
-                        <p>Interval: {Math.round(message.interval / 60)} minutes</p>
-                        <span>•</span>
-                        <p>Status: {message.enabled ? 'Active' : 'Paused'}</p>
+                      <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <span className="font-medium text-white">Starts:</span>
+                          {format(new Date(message.starting_at * 1000), "PPP p")}
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <span className="font-medium text-white">Interval:</span>
+                          {Math.round(message.interval / 60)} minutes
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${message.enabled ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                          <span className="text-gray-400">
+                            {message.enabled ? 'Active' : 'Paused'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(message)}
-                        className="h-8 w-8 text-gray-300 hover:bg-gray-700"
+                        className="h-9 w-9 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
                       >
                         <FiEdit2 className="h-4 w-4" />
                       </Button>
@@ -308,7 +327,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(message.id)}
-                        className="h-8 w-8 text-red-400 hover:bg-gray-700"
+                        className="h-9 w-9 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                       >
                         <FiTrash2 className="h-4 w-4" />
                       </Button>
