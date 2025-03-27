@@ -150,35 +150,35 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
 
-      // Construct the URL with query parameters
-      const url = new URL(editingMessage 
+      // Use direct string concatenation to avoid typos in query parameters
+      const baseUrl = editingMessage 
         ? 'https://robomod.dablietech.club/api/edit_scheduled_message'
-        : 'https://robomod.dablietech.club/api/add_scheduled_message'
-      )
-
-      // Add required query parameters
-      url.searchParams.append('chat_id', chatId)
+        : 'https://robomod.dablietech.club/api/add_scheduled_message';
+      
+      let urlString = `${baseUrl}?chat_id=${encodeURIComponent(chatId)}`;
       
       if (editingMessage) {
         // Add required parameters for edit operation
-        url.searchParams.append('schedule_id', editingMessage.schedule_id)
+        urlString += `&schedule_id=${encodeURIComponent(editingMessage.schedule_id)}`;
         
         // Add optional parameters if they have changed
         if (startingAt !== editingMessage.starting_at) {
-          url.searchParams.append('starting_at', startingAt.toString())
+          urlString += `&starting_at=${encodeURIComponent(startingAt.toString())}`;
         }
         if (intervalSeconds !== editingMessage.interval) {
-          url.searchParams.append('interval', intervalSeconds.toString())
+          urlString += `&interval=${encodeURIComponent(intervalSeconds.toString())}`;
         }
         // Add enabled status
-        url.searchParams.append('enabled', isEnabled.toString())
+        urlString += `&enabled=${encodeURIComponent(isEnabled.toString())}`;
       } else {
         // Add required parameters for add operation
-        url.searchParams.append('starting_at', startingAt.toString())
-        url.searchParams.append('interval', intervalSeconds.toString())
+        urlString += `&starting_at=${encodeURIComponent(startingAt.toString())}`;
+        urlString += `&interval=${encodeURIComponent(intervalSeconds.toString())}`;
       }
+      
+      console.log('Submitting scheduled message to URL:', urlString);
      
-      // Create a new FormData instance 
+      // Create a new FormData instance for the message content
       const formData = new FormData();
       
       // Add the message text if it exists
@@ -186,55 +186,54 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         formData.append('message_text', newMessage.trim());
       }
       
-      // Special handling for file upload
+      // Handle file upload
       if (mediaFile) {
-        // Reset the file input and just use the file directly
-        // This is the key step - we need to make sure we're sending an actual file
-        // with its original content-type intact
+        // Get the file input element to access the raw file
         const fileInput = document.getElementById('media') as HTMLInputElement;
+        
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
-          // Get the file directly from the input element
-          const file = fileInput.files[0];
-          formData.append('media', file);
-        } else if (mediaFile) {
-          // Fallback to the state variable
+          // Always use the file from the input element directly
+          // This ensures we're getting the freshest file object
+          formData.append('media', fileInput.files[0]);
+          
+          console.log('Uploading file:', fileInput.files[0].name, fileInput.files[0].type, fileInput.files[0].size, 'bytes');
+        } else {
+          // Fallback to the state variable if needed
           formData.append('media', mediaFile);
+          console.log('Uploading file from state:', mediaFile.name, mediaFile.type, mediaFile.size, 'bytes');
         }
       }
 
-      // For debugging - log the form data content
-      console.log('Form data entries:');
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}: ${value instanceof File ? `File(${value.name}, ${value.type}, ${value.size} bytes)` : value}`);
-      }
+      // Disable console logging of the entire FormData
+      console.log('Form data fields:', [...formData.keys()].join(', '));
 
-      // Make the request with the form data
-      const response = await fetch(url.toString(), {
+      // Make the request with the proper Content-Type and body
+      const response = await fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
-          // Don't set Content-Type - the browser will set it with the correct boundary
+          // Do NOT set Content-Type for multipart/form-data - browser will set it with correct boundary
         },
         body: formData,
       });
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('API Error Response:', errorText)
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
         
         let errorMessage = editingMessage 
           ? 'Failed to edit scheduled message'
-          : 'Failed to add scheduled message'
+          : 'Failed to add scheduled message';
         
         try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData.detail?.[0]?.msg || errorData.detail || errorData.message || errorMessage
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData?.detail?.[0]?.msg || errorData?.detail || errorData?.message || errorMessage;
         } catch {
           // If JSON parsing fails, use the error text
-          errorMessage = errorText || errorMessage
+          errorMessage = errorText || errorMessage;
         }
         
-        throw new Error(errorMessage)
+        throw new Error(errorMessage);
       }
 
       // Success - reset form
