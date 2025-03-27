@@ -155,16 +155,19 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         ? "/api/edit_scheduled_message"
         : "/api/add_scheduled_message";
       
-      // IMPORTANT: Explicitly hardcode 'chat_id' to avoid typos
-      const url = `https://robomod.dablietech.club${endpoint}?chat_id=${chatId}`;
+      // Fixed URL construction - explicitly using 'chat_id' (NOT chat_d or chat_jd)
+      const baseUrl = "https://robomod.dablietech.club" + endpoint;
       
       if (editingMessage) {
-        // Edit operation - add parameters directly to URL to avoid FormData issues
-        const editUrl = url + 
-          `&schedule_id=${editingMessage.schedule_id}` +
-          `&starting_at=${startingAt}` + 
-          `&interval=${intervalSeconds}` +
-          `&enabled=${isEnabled}`;
+        // Use a URLSearchParams to ensure properly formatted query parameters
+        const params = new URLSearchParams();
+        params.append("chat_id", chatId);
+        params.append("schedule_id", editingMessage.schedule_id);
+        params.append("starting_at", startingAt.toString());
+        params.append("interval", intervalSeconds.toString());
+        params.append("enabled", isEnabled.toString());
+        
+        const editUrl = `${baseUrl}?${params.toString()}`;
         
         // Create form data
         const formData = new FormData();
@@ -174,12 +177,9 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
           formData.append('message_text', newMessage);
         }
         
-        // Only add media if there's a file
+        // Handle media
         if (mediaFile) {
-          // Use a simple approach - create a dummy file
-          // We need to do this since the issue seems to be with sending the file directly
-          const newFile = new File([mediaFile], mediaFile.name, { type: mediaFile.type });
-          formData.append('media', newFile);
+          formData.append('media', mediaFile);
         }
         
         console.log("Editing scheduled message at URL:", editUrl);
@@ -195,51 +195,80 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         
         handleApiResponse(response, "edit");
       } else {
-        // Add operation - add parameters directly to URL 
-        const addUrl = url + 
-          `&starting_at=${startingAt}` + 
-          `&interval=${intervalSeconds}`;
+        // Use a URLSearchParams to ensure properly formatted query parameters
+        const params = new URLSearchParams();
+        params.append("chat_id", chatId);
+        params.append("starting_at", startingAt.toString());
+        params.append("interval", intervalSeconds.toString());
+        
+        const addUrl = `${baseUrl}?${params.toString()}`;
         
         console.log("Adding scheduled message at URL:", addUrl);
         
-        // Create a minimal FormData just with what's needed
-        const formData = new FormData();
-        
-        // Always add message text if present
-        if (newMessage.trim()) {
-          formData.append('message_text', newMessage.trim());
-        }
-        
-        // Only add media if there's a file
-        if (mediaFile) {
-          // Get a fresh File reference
-          const fileInput = document.getElementById('media') as HTMLInputElement;
+        try {
+          // Create FormData for the message and media
+          const formData = new FormData();
           
-          if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            // Create a clean new File object to avoid any reference issues
-            const fileBlob = await fileInput.files[0].arrayBuffer();
-            const cleanFile = new File(
-              [fileBlob], 
-              fileInput.files[0].name, 
-              { type: fileInput.files[0].type }
-            );
-            formData.append('media', cleanFile);
-            
-            console.log("Adding file:", cleanFile.name, cleanFile.type, cleanFile.size, "bytes");
+          // Add message text if present
+          if (newMessage.trim()) {
+            formData.append('message_text', newMessage.trim());
           }
+          
+          // Handle file upload with explicit binary approach
+          if (mediaFile) {
+            const fileInput = document.getElementById('media') as HTMLInputElement;
+            
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+              // Get file from input element
+              const file = fileInput.files[0];
+              console.log("Processing file:", file.name, file.type, file.size, "bytes");
+              
+              // Create a raw Blob to ensure binary data
+              const reader = new FileReader();
+              
+              // Use a Promise to handle the async file reading
+              await new Promise<void>((resolve, reject) => {
+                reader.onload = async function() {
+                  try {
+                    // Get binary data as ArrayBuffer
+                    const arrayBuffer = reader.result as ArrayBuffer;
+                    
+                    // Create a new Blob with the binary data
+                    const blob = new Blob([arrayBuffer], { type: file.type });
+                    
+                    // Add the blob to FormData with the original filename
+                    formData.append('media', blob, file.name);
+                    
+                    console.log("Added file as binary blob:", blob.size, "bytes");
+                    resolve();
+                  } catch (err) {
+                    reject(err);
+                  }
+                };
+                
+                reader.onerror = () => reject(new Error("Failed to read file"));
+                
+                // Read file as binary data
+                reader.readAsArrayBuffer(file);
+              });
+            }
+          }
+          
+          console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
+          
+          const response = await fetch(addUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${tg.initData}`,
+            },
+            body: formData
+          });
+          
+          handleApiResponse(response, "add");
+        } catch (fileError) {
+          console.error("Error processing file:", fileError);
+          throw new Error("Failed to process media file: " + (fileError instanceof Error ? fileError.message : String(fileError)));
         }
-        
-        console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
-        
-        const response = await fetch(addUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-          },
-          body: formData
-        });
-        
-        handleApiResponse(response, "add");
       }
       
       // Success - reset form and refresh
