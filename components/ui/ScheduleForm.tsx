@@ -57,11 +57,6 @@ export function ScheduleForm({
   // Only require valid interval for form submission
   const hasValidInterval = !isNaN(parseInt(interval)) && parseInt(interval) > 0;
   const canSubmit = hasValidInterval;
-  
-  // For new messages, check if content is provided (for UI feedback only)
-  const isNewMessage = !editingMessage;
-  const hasContent = Boolean(newMessage.trim()) || !!mediaFile;
-  const showContentWarning = isNewMessage && !hasContent;
 
   return (
     <form onSubmit={(e) => {
@@ -99,11 +94,6 @@ export function ScheduleForm({
             placeholder="Type your message..."
             className="bg-[#374151] border-gray-600 text-white min-h-[120px]"
           />
-          {showContentWarning && (
-            <p className="text-amber-400 text-sm mt-2">
-              For new messages, please enter either a message or select a media file
-            </p>
-          )}
         </div>
 
         {editingMessage && (

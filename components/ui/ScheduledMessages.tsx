@@ -142,9 +142,9 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         throw new Error('Interval must be a positive number')
       }
       
-      // Check if trying to add a new message without content
+      // API requires at least one of message_text or media
       if (!editingMessage && !newMessage.trim() && !mediaFile) {
-        throw new Error('Please provide either a message or a media file when creating a new scheduled message')
+        throw new Error('Either message text or media must be provided')
       }
 
       // Convert interval from minutes to seconds
@@ -181,22 +181,22 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Create form data for the message content
       const formData = new FormData()
       
-      // Include message_text only if it's not empty
+      // For message_text, explicitly append as a form field value
       if (newMessage.trim()) {
         formData.append('message_text', newMessage.trim())
       }
       
-      // Only append media if there's a file to upload
+      // For media, use the original file object
       if (mediaFile) {
-        // Ensure we're sending the file with the correct filename
-        formData.append('media', mediaFile, mediaFile.name)
+        // Reset the file position pointer before uploading
+        formData.append('media', mediaFile)
       }
 
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
-          // Don't set Content-Type header - browser will set it automatically with the boundary
+          // Let browser set the Content-Type with proper boundary
         },
         body: formData,
       })
