@@ -54,6 +54,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [startDate, setStartDate] = useState<Date>(new Date())
   const [interval, setInterval] = useState('60') // Default 60 minutes
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null)
+  const [isEnabled, setIsEnabled] = useState<boolean>(true)
 
   const fetchScheduledMessages = useCallback(async () => {
     try {
@@ -170,10 +171,8 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         if (intervalSeconds !== editingMessage.interval) {
           url.searchParams.append('interval', intervalSeconds.toString())
         }
-        // Add enabled status if it has changed
-        if (editingMessage.enabled !== undefined) {
-          url.searchParams.append('enabled', editingMessage.enabled.toString())
-        }
+        // Add enabled status
+        url.searchParams.append('enabled', isEnabled.toString())
       } else {
         // Add required parameters for add operation
         url.searchParams.append('starting_at', startingAt.toString())
@@ -222,6 +221,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       setEditingMessage(null)
       setStartDate(new Date())
       setInterval('60')
+      setIsEnabled(true)
       fetchScheduledMessages()
     } catch (error) {
       console.error('Error with scheduled message:', error)
@@ -268,6 +268,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     setNewMessage(message.message_text || '')
     setInterval(Math.round(message.interval / 60).toString())
     setStartDate(new Date(message.starting_at * 1000))
+    setIsEnabled(message.enabled)
   }
 
   if (isLoading) {
@@ -310,6 +311,8 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
               setMediaFile={setMediaFile}
               isSubmitting={isSubmitting}
               editingMessage={editingMessage}
+              isEnabled={isEnabled}
+              setIsEnabled={setIsEnabled}
               onSubmit={handleSubmit}
             />
           </CardContent>

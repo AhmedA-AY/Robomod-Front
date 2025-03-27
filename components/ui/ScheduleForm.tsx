@@ -34,6 +34,8 @@ interface ScheduleFormProps {
   setMediaFile: (file: File | null) => void
   isSubmitting: boolean
   editingMessage: ScheduledMessage | null
+  isEnabled: boolean
+  setIsEnabled: (enabled: boolean) => void
   onSubmit: (e: React.FormEvent) => Promise<void>
 }
 
@@ -48,6 +50,8 @@ export function ScheduleForm({
   setMediaFile,
   isSubmitting,
   editingMessage,
+  isEnabled,
+  setIsEnabled,
   onSubmit
 }: ScheduleFormProps) {
   // Check if form can be submitted (has message or media AND valid interval)
@@ -100,6 +104,30 @@ export function ScheduleForm({
             </p>
           )}
         </div>
+
+        {editingMessage && (
+          <div className="flex items-center gap-2">
+            <Label className="text-gray-300">Status</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={isEnabled ? "default" : "outline"}
+                onClick={() => setIsEnabled(true)}
+                className={`${isEnabled ? 'bg-green-500 hover:bg-green-600' : 'bg-[#374151] border-gray-600 text-white hover:bg-gray-700'}`}
+              >
+                Active
+              </Button>
+              <Button
+                type="button"
+                variant={!isEnabled ? "default" : "outline"}
+                onClick={() => setIsEnabled(false)}
+                className={`${!isEnabled ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-[#374151] border-gray-600 text-white hover:bg-gray-700'}`}
+              >
+                Paused
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-4 items-center">
