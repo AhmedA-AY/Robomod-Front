@@ -10,12 +10,17 @@ import { FiUpload } from 'react-icons/fi'
 import { TelegramDatePicker } from "@/components/ui/TelegramDatePicker"
 
 interface ScheduledMessage {
-  id: string;
-  message_text?: string;
-  media?: string;
+  schedule_id: string;
+  chat_id: number;
+  message_id: number;
+  enabled: boolean;
+  type: string;
   starting_at: number;
   interval: number;
-  enabled: boolean;
+  last_run: number;
+  next_run: number;
+  message_text?: string;
+  media?: string;
 }
 
 interface ScheduleFormProps {
@@ -29,7 +34,7 @@ interface ScheduleFormProps {
   setMediaFile: (file: File | null) => void
   isSubmitting: boolean
   editingMessage: ScheduledMessage | null
-  onSubmit: (e: React.FormEvent) => void
+  onSubmit: (e: React.FormEvent) => Promise<void>
 }
 
 export function ScheduleForm({
@@ -103,6 +108,7 @@ export function ScheduleForm({
             type="file"
             id="media"
             className="hidden"
+            aria-label="Upload media file"
             onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
           />
           <Button

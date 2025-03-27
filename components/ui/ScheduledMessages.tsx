@@ -11,12 +11,17 @@ import { format } from "date-fns"
 import { ScheduleForm } from "@/components/ui/ScheduleForm"
 
 interface ScheduledMessage {
-  id: string;
-  message_text?: string;
-  media?: string;
+  schedule_id: string;
+  chat_id: number;
+  message_id: number;
+  enabled: boolean;
+  type: string;
   starting_at: number;
   interval: number;
-  enabled: boolean;
+  last_run: number;
+  next_run: number;
+  message_text?: string;
+  media?: string;
 }
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
@@ -38,6 +43,26 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 Textarea.displayName = "Textarea"
 
 export { Textarea }
+
+interface ScheduleFormProps {
+  startDate: Date;
+  setStartDate: (date: Date) => void;
+  interval: string;
+  setInterval: (interval: string) => void;
+  newMessage: string;
+  setNewMessage: (message: string) => void;
+  mediaFile: File | null;
+  setMediaFile: (file: File | null) => void;
+  isSubmitting: boolean;
+  editingMessage: {
+    schedule_id: string;
+    message_text?: string;
+    media?: string;
+    starting_at: number;
+    interval: number;
+  } | null;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+}
 
 export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [messages, setMessages] = useState<ScheduledMessage[]>([])
@@ -77,8 +102,33 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       }
 
       const data = await response.json()
-      // Ensure data is an array, otherwise use empty array
-      setMessages(Array.isArray(data) ? data : [])
+      
+      // Handle the API response structure
+      if (data && typeof data === 'object' && 'scheduled_messages' in data) {
+        // Ensure scheduled_messages is an array
+        const messages = Array.isArray(data.scheduled_messages) 
+          ? data.scheduled_messages 
+          : []
+        
+        // Transform the data to match our interface
+        const transformedMessages = messages.map((msg: any) => ({
+          schedule_id: msg.schedule_id,
+          chat_id: msg.chat_id,
+          message_id: msg.message_id,
+          enabled: msg.enabled,
+          type: msg.type,
+          starting_at: msg.starting_at,
+          interval: msg.interval,
+          last_run: msg.last_run,
+          next_run: msg.next_run,
+          message_text: msg.message_text,
+          media: msg.media
+        }))
+        
+        setMessages(transformedMessages)
+      } else {
+        setMessages([])
+      }
     } catch (error) {
       console.error('Error fetching scheduled messages:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch messages')
@@ -133,7 +183,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       
       // Add schedule_id only for edit operation
       if (editingMessage) {
-        url.searchParams.append('schedule_id', editingMessage.id)
+        url.searchParams.append('schedule_id', editingMessage.schedule_id)
       }
       
       // Create form data for the message content
@@ -282,22 +332,18 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
             </div>
           ) : (
             messages.map((message) => (
-              <Card key={message.id} className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm hover:bg-gray-800/70 transition-colors">
+              <Card key={message.schedule_id} className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm hover:bg-gray-800/70 transition-colors">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-500/10 p-2 rounded-lg shrink-0">
                       <Clock className="w-5 h-5 text-blue-400" />
                     </div>
                     <div className="flex-grow min-w-0">
-                      {message.message_text && (
-                        <p className="text-white whitespace-pre-wrap text-sm leading-relaxed">{message.message_text}</p>
-                      )}
-                      {message.media && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-blue-400">
-                          <span className="bg-blue-500/10 px-2 py-1 rounded-full">Contains media</span>
-                        </div>
-                      )}
                       <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <span className="font-medium text-white">Message ID:</span>
+                          {message.message_id}
+                        </div>
                         <div className="flex items-center gap-2 text-gray-400">
                           <span className="font-medium text-white">Starts:</span>
                           {format(new Date(message.starting_at * 1000), "PPP p")}
@@ -313,6 +359,16 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                           </span>
                         </div>
                       </div>
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <span className="font-medium text-white">Last Run:</span>
+                          {format(new Date(message.last_run * 1000), "PPP p")}
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <span className="font-medium text-white">Next Run:</span>
+                          {format(new Date(message.next_run * 1000), "PPP p")}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <Button
@@ -326,7 +382,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(message.id)}
+                        onClick={() => handleDelete(message.schedule_id)}
                         className="h-9 w-9 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                       >
                         <FiTrash2 className="h-4 w-4" />
