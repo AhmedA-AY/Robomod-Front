@@ -3,9 +3,10 @@
 import { createContext, useContext, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
-import { MessageCircle, MessageSquare, Menu } from 'lucide-react'
+import { MessageCircle, MessageSquare, Menu, HelpCircle } from 'lucide-react'
 import AIChatInterface from '@/components/ui/AIChatInterface'
 import ScheduledMessages from '@/components/ui/ScheduledMessages'
+import FaqSettings from '@/components/ui/FaqSettings'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Chat {
@@ -48,6 +49,7 @@ export default function Home() {
   const tabs = [
     { id: 'ai', label: 'AI Assistant', icon: <MessageCircle className="w-5 h-5" />, color: 'text-blue-500' },
     { id: 'scheduled', label: 'Scheduled Posts', icon: <MessageSquare className="w-5 h-5" />, color: 'text-emerald-500' },
+    { id: 'faq', label: 'FAQ Settings', icon: <HelpCircle className="w-5 h-5" />, color: 'text-amber-500' },
   ]
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
@@ -157,7 +159,8 @@ export default function Home() {
           >
             {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
             {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
-            {activeTab !== 'ai' && activeTab !== 'scheduled' && (
+            {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
+            {activeTab !== 'ai' && activeTab !== 'scheduled' && activeTab !== 'faq' && (
               <div className="h-full flex items-center justify-center p-4">
                 <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl border border-border">
                   <div className="flex flex-col items-center justify-center text-center gap-4">
