@@ -44,26 +44,6 @@ Textarea.displayName = "Textarea"
 
 export { Textarea }
 
-interface ScheduleFormProps {
-  startDate: Date;
-  setStartDate: (date: Date) => void;
-  interval: string;
-  setInterval: (interval: string) => void;
-  newMessage: string;
-  setNewMessage: (message: string) => void;
-  mediaFile: File | null;
-  setMediaFile: (file: File | null) => void;
-  isSubmitting: boolean;
-  editingMessage: {
-    schedule_id: string;
-    message_text?: string;
-    media?: string;
-    starting_at: number;
-    interval: number;
-  } | null;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-}
-
 export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [messages, setMessages] = useState<ScheduledMessage[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -111,16 +91,16 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
           : []
         
         // Transform the data to match our interface
-        const transformedMessages = messages.map((msg: any) => ({
-          schedule_id: msg.schedule_id,
-          chat_id: msg.chat_id,
-          message_id: msg.message_id,
-          enabled: msg.enabled,
-          type: msg.type,
-          starting_at: msg.starting_at,
-          interval: msg.interval,
-          last_run: msg.last_run,
-          next_run: msg.next_run,
+        const transformedMessages = messages.map((msg: Partial<ScheduledMessage>) => ({
+          schedule_id: msg.schedule_id || '',
+          chat_id: msg.chat_id || 0,
+          message_id: msg.message_id || 0,
+          enabled: msg.enabled || false,
+          type: msg.type || 'message',
+          starting_at: msg.starting_at || 0,
+          interval: msg.interval || 0,
+          last_run: msg.last_run || 0,
+          next_run: msg.next_run || 0,
           message_text: msg.message_text,
           media: msg.media
         }))
