@@ -21,6 +21,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
   const [message, setMessage] = useState('')
   const [enabled, setEnabled] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   const fetchFaqSettings = useCallback(async () => {
     try {
@@ -32,11 +33,11 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      // Construct the URL with query parameters
-      const url = new URL('https://robomod.dablietech.club/api/get_faq_settings')
-      url.searchParams.append('chat_id', chatId)
+      // Use direct string concatenation to avoid any URL parsing issues
+      const urlString = `https://robomod.dablietech.club/api/get_faq_settings?chat_id=${encodeURIComponent(chatId)}`;
+      console.log('Fetching FAQ settings from URL:', urlString);
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(urlString, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -45,25 +46,59 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       })
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || 'Failed to fetch FAQ settings')
+        const errorText = await response.text();
+        console.error('Error response from API:', errorText);
+        let errorMessage = 'Failed to fetch FAQ settings';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`;
+        } catch (e) {
+          // If JSON parsing fails, use the error text
+          errorMessage = errorText || `${response.status} ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json()
+      console.log('Received FAQ settings:', data);
       
       // Set the state with the retrieved settings
       if (data) {
         setSettings(data)
         setMessage(data.message || '')
         setEnabled(data.enabled || false)
+      } else {
+        // Handle empty response
+        console.warn('Received empty data from API');
+        setSettings({ enabled: false, message: '' })
       }
     } catch (error) {
       console.error('Error fetching FAQ settings:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch FAQ settings')
+      
+      // If there's no settings yet, use empty defaults
+      if (settings === null) {
+        setSettings({ enabled: false, message: '' })
+      }
     } finally {
       setIsLoading(false)
     }
-  }, [chatId])
+  }, [chatId, settings])
+
+  // Retry mechanism for failed fetches
+  useEffect(() => {
+    if (error && retryCount < 3) {
+      const timer = setTimeout(() => {
+        console.log(`Retrying FAQ settings fetch (${retryCount + 1}/3)...`);
+        setRetryCount(prev => prev + 1);
+        fetchFaqSettings();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, retryCount, fetchFaqSettings]);
 
   useEffect(() => {
     fetchFaqSettings()
@@ -79,12 +114,11 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      // Construct the URL with query parameters
-      const url = new URL('https://robomod.dablietech.club/api/toggle_faq')
-      url.searchParams.append('chat_id', chatId)
-      url.searchParams.append('enabled', newEnabledState.toString())
+      // Use direct string concatenation for URL
+      const urlString = `https://robomod.dablietech.club/api/toggle_faq?chat_id=${encodeURIComponent(chatId)}&enabled=${newEnabledState}`;
+      console.log('Toggling FAQ with URL:', urlString);
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -128,12 +162,11 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error('FAQ message cannot be empty')
       }
 
-      // Construct the URL with query parameters
-      const url = new URL('https://robomod.dablietech.club/api/set_faq_message')
-      url.searchParams.append('chat_id', chatId)
-      url.searchParams.append('message', message.trim())
+      // Use direct string concatenation for URL
+      const urlString = `https://robomod.dablietech.club/api/set_faq_message?chat_id=${encodeURIComponent(chatId)}&message=${encodeURIComponent(message.trim())}`;
+      console.log('Saving FAQ message with URL:', urlString);
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -161,7 +194,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
     }
   }
 
-  if (isLoading) {
+  if (isLoading && retryCount === 0) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -169,12 +202,23 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
     )
   }
 
-  if (error) {
+  // Even if there's an error, as long as we have fallback settings, we can show the form
+  // This allows users to still set their FAQ settings even if the initial fetch failed
+  if (error && settings === null) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="bg-destructive/10 p-6 rounded-lg max-w-md text-center">
           <p className="text-destructive font-medium text-lg mb-2">Error</p>
           <p className="text-foreground/90">{error}</p>
+          <Button 
+            onClick={() => {
+              setRetryCount(0);
+              fetchFaqSettings();
+            }}
+            className="mt-4 bg-primary text-white"
+          >
+            Retry
+          </Button>
         </div>
       </div>
     )
