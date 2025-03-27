@@ -150,106 +150,138 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
 
-      // Use direct string concatenation to avoid typos in query parameters
-      const baseUrl = editingMessage 
-        ? 'https://robomod.dablietech.club/api/edit_scheduled_message'
-        : 'https://robomod.dablietech.club/api/add_scheduled_message';
+      // Manual URL construction - hardcoded to avoid typos
+      const endpoint = editingMessage
+        ? "/api/edit_scheduled_message"
+        : "/api/add_scheduled_message";
       
-      let urlString = `${baseUrl}?chat_id=${encodeURIComponent(chatId)}`;
+      // IMPORTANT: Explicitly hardcode 'chat_id' to avoid typos
+      const url = `https://robomod.dablietech.club${endpoint}?chat_id=${chatId}`;
       
       if (editingMessage) {
-        // Add required parameters for edit operation
-        urlString += `&schedule_id=${encodeURIComponent(editingMessage.schedule_id)}`;
+        // Edit operation - add parameters directly to URL to avoid FormData issues
+        const editUrl = url + 
+          `&schedule_id=${editingMessage.schedule_id}` +
+          `&starting_at=${startingAt}` + 
+          `&interval=${intervalSeconds}` +
+          `&enabled=${isEnabled}`;
         
-        // Add optional parameters if they have changed
-        if (startingAt !== editingMessage.starting_at) {
-          urlString += `&starting_at=${encodeURIComponent(startingAt.toString())}`;
+        // Create form data
+        const formData = new FormData();
+        
+        // Only add message_text if changed
+        if (newMessage.trim() !== editingMessage.message_text) {
+          formData.append('message_text', newMessage);
         }
-        if (intervalSeconds !== editingMessage.interval) {
-          urlString += `&interval=${encodeURIComponent(intervalSeconds.toString())}`;
+        
+        // Only add media if there's a file
+        if (mediaFile) {
+          // Use a simple approach - create a dummy file
+          // We need to do this since the issue seems to be with sending the file directly
+          const newFile = new File([mediaFile], mediaFile.name, { type: mediaFile.type });
+          formData.append('media', newFile);
         }
-        // Add enabled status
-        urlString += `&enabled=${encodeURIComponent(isEnabled.toString())}`;
+        
+        console.log("Editing scheduled message at URL:", editUrl);
+        console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
+        
+        const response = await fetch(editUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tg.initData}`,
+          },
+          body: formData
+        });
+        
+        handleApiResponse(response, "edit");
       } else {
-        // Add required parameters for add operation
-        urlString += `&starting_at=${encodeURIComponent(startingAt.toString())}`;
-        urlString += `&interval=${encodeURIComponent(intervalSeconds.toString())}`;
-      }
-      
-      console.log('Submitting scheduled message to URL:', urlString);
-     
-      // Create a new FormData instance for the message content
-      const formData = new FormData();
-      
-      // Add the message text if it exists
-      if (newMessage.trim()) {
-        formData.append('message_text', newMessage.trim());
-      }
-      
-      // Handle file upload
-      if (mediaFile) {
-        // Get the file input element to access the raw file
-        const fileInput = document.getElementById('media') as HTMLInputElement;
+        // Add operation - add parameters directly to URL 
+        const addUrl = url + 
+          `&starting_at=${startingAt}` + 
+          `&interval=${intervalSeconds}`;
         
-        if (fileInput && fileInput.files && fileInput.files.length > 0) {
-          // Always use the file from the input element directly
-          // This ensures we're getting the freshest file object
-          formData.append('media', fileInput.files[0]);
+        console.log("Adding scheduled message at URL:", addUrl);
+        
+        // Create a minimal FormData just with what's needed
+        const formData = new FormData();
+        
+        // Always add message text if present
+        if (newMessage.trim()) {
+          formData.append('message_text', newMessage.trim());
+        }
+        
+        // Only add media if there's a file
+        if (mediaFile) {
+          // Get a fresh File reference
+          const fileInput = document.getElementById('media') as HTMLInputElement;
           
-          console.log('Uploading file:', fileInput.files[0].name, fileInput.files[0].type, fileInput.files[0].size, 'bytes');
-        } else {
-          // Fallback to the state variable if needed
-          formData.append('media', mediaFile);
-          console.log('Uploading file from state:', mediaFile.name, mediaFile.type, mediaFile.size, 'bytes');
-        }
-      }
-
-      // Disable console logging of the entire FormData
-      console.log('Form data fields:', [...formData.keys()].join(', '));
-
-      // Make the request with the proper Content-Type and body
-      const response = await fetch(urlString, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          // Do NOT set Content-Type for multipart/form-data - browser will set it with correct boundary
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        
-        let errorMessage = editingMessage 
-          ? 'Failed to edit scheduled message'
-          : 'Failed to add scheduled message';
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData?.detail?.[0]?.msg || errorData?.detail || errorData?.message || errorMessage;
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || errorMessage;
+          if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            // Create a clean new File object to avoid any reference issues
+            const fileBlob = await fileInput.files[0].arrayBuffer();
+            const cleanFile = new File(
+              [fileBlob], 
+              fileInput.files[0].name, 
+              { type: fileInput.files[0].type }
+            );
+            formData.append('media', cleanFile);
+            
+            console.log("Adding file:", cleanFile.name, cleanFile.type, cleanFile.size, "bytes");
+          }
         }
         
-        throw new Error(errorMessage);
+        console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
+        
+        const response = await fetch(addUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tg.initData}`,
+          },
+          body: formData
+        });
+        
+        handleApiResponse(response, "add");
       }
-
-      // Success - reset form
-      setNewMessage('')
-      setMediaFile(null)
-      setEditingMessage(null)
-      setStartDate(new Date())
-      setInterval('60')
-      setIsEnabled(true)
-      fetchScheduledMessages()
+      
+      // Success - reset form and refresh
+      resetForm();
+      fetchScheduledMessages();
     } catch (error) {
       console.error('Error with scheduled message:', error)
       setError(error instanceof Error ? error.message : 'Failed to process request')
     } finally {
       setIsSubmitting(false)
     }
+  }
+  
+  // Helper function to handle API responses
+  const handleApiResponse = async (response: Response, operation: "add" | "edit") => {
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error Response (${operation}):`, errorText);
+      
+      let errorMessage = 
+        operation === "edit" ? 'Failed to edit scheduled message' : 'Failed to add scheduled message';
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData?.detail || errorData?.message || errorMessage;
+      } catch {
+        // If JSON parsing fails, use the error text
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+  }
+  
+  // Helper function to reset the form
+  const resetForm = () => {
+    setNewMessage('');
+    setMediaFile(null);
+    setEditingMessage(null);
+    setStartDate(new Date());
+    setInterval('60');
+    setIsEnabled(true);
   }
 
   const handleDelete = async (scheduleId: string) => {
