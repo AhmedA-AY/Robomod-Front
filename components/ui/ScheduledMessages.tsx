@@ -158,12 +158,26 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
       // Add required query parameters
       url.searchParams.append('chat_id', chatId)
-      url.searchParams.append('starting_at', startingAt.toString())
-      url.searchParams.append('interval', intervalSeconds.toString())
       
-      // Add schedule_id only for edit operation
       if (editingMessage) {
+        // Add required parameters for edit operation
         url.searchParams.append('schedule_id', editingMessage.schedule_id)
+        
+        // Add optional parameters if they have changed
+        if (startingAt !== editingMessage.starting_at) {
+          url.searchParams.append('starting_at', startingAt.toString())
+        }
+        if (intervalSeconds !== editingMessage.interval) {
+          url.searchParams.append('interval', intervalSeconds.toString())
+        }
+        // Add enabled status if it has changed
+        if (editingMessage.enabled !== undefined) {
+          url.searchParams.append('enabled', editingMessage.enabled.toString())
+        }
+      } else {
+        // Add required parameters for add operation
+        url.searchParams.append('starting_at', startingAt.toString())
+        url.searchParams.append('interval', intervalSeconds.toString())
       }
       
       // Create form data for the message content
