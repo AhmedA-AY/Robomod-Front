@@ -141,6 +141,11 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       if (isNaN(intervalMinutes) || intervalMinutes < 1) {
         throw new Error('Interval must be a positive number')
       }
+      
+      // Check if trying to add a new message without content
+      if (!editingMessage && !newMessage.trim() && !mediaFile) {
+        throw new Error('Please provide either a message or a media file when creating a new scheduled message')
+      }
 
       // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
@@ -176,8 +181,10 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Create form data for the message content
       const formData = new FormData()
       
-      // Always include message_text field
-      formData.append('message_text', newMessage.trim() || '')
+      // Include message_text only if it's not empty
+      if (newMessage.trim()) {
+        formData.append('message_text', newMessage.trim())
+      }
       
       // Only append media if there's a file to upload
       if (mediaFile) {
