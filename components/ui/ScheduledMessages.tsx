@@ -176,18 +176,29 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Create form data for the message content
       const formData = new FormData()
       
-      // Only append message_text if it's not empty or if we're editing and it's different
+      // Handle message_text according to schema
       if (editingMessage) {
+        // When editing, only include message_text if it's different
         if (newMessage.trim() !== editingMessage.message_text) {
-          formData.append('message_text', newMessage)
+          formData.append('message_text', newMessage.trim() || 'null')
         }
-      } else if (newMessage.trim()) {
-        formData.append('message_text', newMessage)
+      } else {
+        // When creating new, always include message_text
+        formData.append('message_text', newMessage.trim() || 'null')
       }
       
-      // Only append media if it's a new file
-      if (mediaFile) {
-        formData.append('media', mediaFile)
+      // Handle media according to schema
+      if (editingMessage) {
+        if (mediaFile) {
+          // If there's a new file, send it
+          formData.append('media', mediaFile)
+        } else if (editingMessage.media) {
+          // If there's existing media and no new file, send null to keep existing
+          formData.append('media', 'null')
+        }
+      } else {
+        // For new messages, send the file if present or null
+        formData.append('media', mediaFile || 'null')
       }
 
       const response = await fetch(url.toString(), {
