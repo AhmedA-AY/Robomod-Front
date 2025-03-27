@@ -125,12 +125,6 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Check for required content before proceeding
-    if (!newMessage && !mediaFile) {
-      setError('Either message text or media must be provided')
-      return
-    }
-    
     setIsSubmitting(true)
     setError(null) // Clear any previous errors
     
@@ -181,9 +175,17 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       
       // Create form data for the message content
       const formData = new FormData()
-      if (newMessage) {
+      
+      // Only append message_text if it's not empty or if we're editing and it's different
+      if (editingMessage) {
+        if (newMessage.trim() !== editingMessage.message_text) {
+          formData.append('message_text', newMessage)
+        }
+      } else if (newMessage.trim()) {
         formData.append('message_text', newMessage)
       }
+      
+      // Only append media if it's a new file
       if (mediaFile) {
         formData.append('media', mediaFile)
       }
