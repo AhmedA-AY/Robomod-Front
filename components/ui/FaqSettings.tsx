@@ -53,7 +53,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`;
-        } catch (_) {
+        } catch {
           // If JSON parsing fails, use the error text
           errorMessage = errorText || `${response.status} ${response.statusText}`;
         }
