@@ -176,28 +176,20 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Create form data for the message content
       const formData = new FormData()
       
-      // Handle message_text according to schema
-      if (editingMessage) {
-        // When editing, only include message_text if it's different
-        if (newMessage.trim() !== editingMessage.message_text) {
-          formData.append('message_text', newMessage.trim() || 'null')
-        }
-      } else {
-        // When creating new, always include message_text
-        formData.append('message_text', newMessage.trim() || 'null')
-      }
+      // Always include message_text field
+      formData.append('message_text', newMessage.trim() || '')
       
-      // Handle media according to schema
+      // Only append media if there's a file to upload
       if (mediaFile) {
-        // If there's a file, send it
-        formData.append('media', mediaFile)
+        // Ensure we're sending the file with the correct filename
+        formData.append('media', mediaFile, mediaFile.name)
       }
-      // If no file, don't append media field at all
 
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
+          // Don't set Content-Type header - browser will set it automatically with the boundary
         },
         body: formData,
       })
