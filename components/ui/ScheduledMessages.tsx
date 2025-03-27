@@ -188,18 +188,11 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       }
       
       // Handle media according to schema
-      if (editingMessage) {
-        if (mediaFile) {
-          // If there's a new file, send it
-          formData.append('media', mediaFile)
-        } else if (editingMessage.media) {
-          // If there's existing media and no new file, send null to keep existing
-          formData.append('media', 'null')
-        }
-      } else {
-        // For new messages, send the file if present or null
-        formData.append('media', mediaFile || 'null')
+      if (mediaFile) {
+        // If there's a file, send it
+        formData.append('media', mediaFile)
       }
+      // If no file, don't append media field at all
 
       const response = await fetch(url.toString(), {
         method: 'POST',
