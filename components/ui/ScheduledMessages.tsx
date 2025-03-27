@@ -177,29 +177,46 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         url.searchParams.append('starting_at', startingAt.toString())
         url.searchParams.append('interval', intervalSeconds.toString())
       }
+     
+      // Create a new FormData instance 
+      const formData = new FormData();
       
-      // Create form data for the message content
-      const formData = new FormData()
-      
-      // For message_text, explicitly append as a form field value
+      // Add the message text if it exists
       if (newMessage.trim()) {
-        formData.append('message_text', newMessage.trim())
+        formData.append('message_text', newMessage.trim());
       }
       
-      // For media, use the original file object
+      // Special handling for file upload
       if (mediaFile) {
-        // Reset the file position pointer before uploading
-        formData.append('media', mediaFile)
+        // Reset the file input and just use the file directly
+        // This is the key step - we need to make sure we're sending an actual file
+        // with its original content-type intact
+        const fileInput = document.getElementById('media') as HTMLInputElement;
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+          // Get the file directly from the input element
+          const file = fileInput.files[0];
+          formData.append('media', file);
+        } else if (mediaFile) {
+          // Fallback to the state variable
+          formData.append('media', mediaFile);
+        }
       }
 
+      // For debugging - log the form data content
+      console.log('Form data entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}: ${value instanceof File ? `File(${value.name}, ${value.type}, ${value.size} bytes)` : value}`);
+      }
+
+      // Make the request with the form data
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
-          // Let browser set the Content-Type with proper boundary
+          // Don't set Content-Type - the browser will set it with the correct boundary
         },
         body: formData,
-      })
+      });
 
       if (!response.ok) {
         const errorText = await response.text()

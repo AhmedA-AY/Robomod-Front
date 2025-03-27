@@ -57,12 +57,15 @@ export function ScheduleForm({
   // Only require valid interval for form submission
   const hasValidInterval = !isNaN(parseInt(interval)) && parseInt(interval) > 0;
   const canSubmit = hasValidInterval;
+  
+  // Create a ref for the file input
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <form onSubmit={(e) => {
       e.preventDefault();
       onSubmit(e);
-    }} className="space-y-6">
+    }} className="space-y-6" encType="multipart/form-data">
       <div className="space-y-4">
         <TelegramDatePicker
           date={startDate}
@@ -124,8 +127,10 @@ export function ScheduleForm({
       <div className="flex gap-4 items-center">
         <div className="flex-1">
           <input
+            ref={fileInputRef}
             type="file"
             id="media"
+            name="media"
             className="hidden"
             aria-label="Upload media file"
             onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
@@ -133,7 +138,7 @@ export function ScheduleForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => document.getElementById('media')?.click()}
+            onClick={() => fileInputRef.current?.click()}
             className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
           >
             <FiUpload className="w-4 h-4 mr-2" />
