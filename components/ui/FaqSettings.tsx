@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from 'lucide-react'
@@ -14,6 +14,11 @@ interface FaqSettings {
   message: string;
 }
 
+// Rate limiting timestamps by endpoint
+interface EndpointTimestamps {
+  [endpoint: string]: number;
+}
+
 export default function FaqSettings({ chatId }: { chatId: string }) {
   const [settings, setSettings] = useState<FaqSettings | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -22,25 +27,33 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
   const [enabled, setEnabled] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
-  const [lastApiCall, setLastApiCall] = useState(0)
+  
+  // Use a ref to track API call timestamps by endpoint
+  const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
   // Helper function to ensure rate limiting compliance
-  const safeApiCall = async (apiCall: () => Promise<Response>): Promise<Response> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<Response>): Promise<Response> => {
     const now = Date.now()
-    const timeSinceLastCall = now - lastApiCall
+    const lastCallTime = lastApiCallsRef.current[endpoint] || 0
+    const timeSinceLastCall = now - lastCallTime
     
-    // Ensure at least 1100ms between API calls (adding 100ms buffer to the 1s rate limit)
+    // Ensure at least 1100ms between API calls to the same endpoint (adding 100ms buffer)
     if (timeSinceLastCall < 1100) {
       const waitTime = 1100 - timeSinceLastCall
-      console.log(`Rate limiting: waiting ${waitTime}ms before API call`)
+      console.log(`Rate limiting for ${endpoint}: waiting ${waitTime}ms before API call`)
       await new Promise(resolve => setTimeout(resolve, waitTime))
     }
     
-    // Update the last API call timestamp
-    setLastApiCall(Date.now())
+    // Update the timestamp for this endpoint (synchronously with ref)
+    lastApiCallsRef.current[endpoint] = Date.now()
     
-    return apiCall()
-  }
+    try {
+      return await apiCall()
+    } catch (error) {
+      console.error(`API call to ${endpoint} failed:`, error)
+      throw error
+    }
+  }, [])
 
   const fetchFaqSettings = useCallback(async () => {
     try {
@@ -56,12 +69,12 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
       
-      // Use direct string concatenation to avoid URL parsing issues
-      const urlString = `https://robomod.dablietech.club/api/get_faq_settings?${params.toString()}`
+      const endpoint = '/api/get_faq_settings'
+      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
       console.log('Fetching FAQ settings from URL:', urlString)
 
-      // Use the safe API call function
-      const response = await safeApiCall(() => fetch(urlString, {
+      // Use the safe API call function with endpoint tracking
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -109,7 +122,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
     } finally {
       setIsLoading(false)
     }
-  }, [chatId, settings, safeApiCall, lastApiCall])
+  }, [chatId, settings, safeApiCall])
 
   // Retry mechanism with exponential backoff for failed fetches
   useEffect(() => {
@@ -146,12 +159,12 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       params.append('chat_id', chatId)
       params.append('enabled', newEnabledState.toString())
       
-      // Use direct string concatenation for URL
-      const urlString = `https://robomod.dablietech.club/api/toggle_faq?${params.toString()}`
+      const endpoint = '/api/toggle_faq'
+      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
       console.log('Toggling FAQ with URL:', urlString)
 
-      // Use the safe API call function
-      const response = await safeApiCall(() => fetch(urlString, {
+      // Use the safe API call function with endpoint tracking
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -208,12 +221,12 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       params.append('chat_id', chatId)
       params.append('message', message.trim())
       
-      // Use direct string concatenation for URL
-      const urlString = `https://robomod.dablietech.club/api/set_faq_message?${params.toString()}`
+      const endpoint = '/api/set_faq_message'
+      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
       console.log('Saving FAQ message with URL:', urlString)
 
-      // Use the safe API call function
-      const response = await safeApiCall(() => fetch(urlString, {
+      // Use the safe API call function with endpoint tracking
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
