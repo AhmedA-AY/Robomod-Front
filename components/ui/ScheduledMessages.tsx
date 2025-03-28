@@ -146,6 +146,12 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       if (!editingMessage && !newMessage.trim() && !mediaFile) {
         throw new Error('Either message text or media must be provided')
       }
+      
+      // Check file size limit - max 10MB
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+      if (mediaFile && mediaFile.size > MAX_FILE_SIZE) {
+        throw new Error(`File is too large. Maximum size is 10MB. Your file is ${(mediaFile.size / (1024 * 1024)).toFixed(2)}MB.`);
+      }
 
       // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
@@ -179,6 +185,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         
         // Handle media
         if (mediaFile) {
+          console.log("Adding media file:", mediaFile.name, mediaFile.type, "Size:", (mediaFile.size / (1024 * 1024)).toFixed(2) + "MB");
           formData.append('media', mediaFile);
         }
         
@@ -193,7 +200,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
           body: formData
         });
         
-        handleApiResponse(response, "edit");
+        await handleApiResponse(response, "edit");
       } else {
         // Use a URLSearchParams to ensure properly formatted query parameters
         const params = new URLSearchParams();
@@ -214,44 +221,14 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
             formData.append('message_text', newMessage.trim());
           }
           
-          // Handle file upload with explicit binary approach
+          // Handle file upload with detailed logging
           if (mediaFile) {
-            const fileInput = document.getElementById('media') as HTMLInputElement;
+            console.log("Processing file:", mediaFile.name, mediaFile.type, (mediaFile.size / (1024 * 1024)).toFixed(2) + "MB");
             
-            if (fileInput && fileInput.files && fileInput.files.length > 0) {
-              // Get file from input element
-              const file = fileInput.files[0];
-              console.log("Processing file:", file.name, file.type, file.size, "bytes");
-              
-              // Create a raw Blob to ensure binary data
-              const reader = new FileReader();
-              
-              // Use a Promise to handle the async file reading
-              await new Promise<void>((resolve, reject) => {
-                reader.onload = async function() {
-                  try {
-                    // Get binary data as ArrayBuffer
-                    const arrayBuffer = reader.result as ArrayBuffer;
-                    
-                    // Create a new Blob with the binary data
-                    const blob = new Blob([arrayBuffer], { type: file.type });
-                    
-                    // Add the blob to FormData with the original filename
-                    formData.append('media', blob, file.name);
-                    
-                    console.log("Added file as binary blob:", blob.size, "bytes");
-                    resolve();
-                  } catch (err) {
-                    reject(err);
-                  }
-                };
-                
-                reader.onerror = () => reject(new Error("Failed to read file"));
-                
-                // Read file as binary data
-                reader.readAsArrayBuffer(file);
-              });
-            }
+            // Add file directly to form data
+            formData.append('media', mediaFile);
+            
+            console.log("Added file to FormData");
           }
           
           console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
@@ -264,7 +241,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
             body: formData
           });
           
-          handleApiResponse(response, "add");
+          await handleApiResponse(response, "add");
         } catch (fileError) {
           console.error("Error processing file:", fileError);
           throw new Error("Failed to process media file: " + (fileError instanceof Error ? fileError.message : String(fileError)));
@@ -291,12 +268,19 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       let errorMessage = 
         operation === "edit" ? 'Failed to edit scheduled message' : 'Failed to add scheduled message';
       
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData?.detail || errorData?.message || errorMessage;
-      } catch {
-        // If JSON parsing fails, use the error text
-        errorMessage = errorText || errorMessage;
+      // Check for specific status codes
+      if (response.status === 413) {
+        errorMessage = "File is too large. Please upload a smaller file (maximum 10MB).";
+      } else if (response.status === 429) {
+        errorMessage = "Too many requests. Please try again later.";
+      } else {
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData?.detail || errorData?.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, use the error text
+          errorMessage = errorText || errorMessage;
+        }
       }
       
       throw new Error(errorMessage);

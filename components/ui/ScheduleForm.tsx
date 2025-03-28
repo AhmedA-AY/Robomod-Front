@@ -8,6 +8,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from 'lucide-react'
 import { FiUpload } from 'react-icons/fi'
 import { TelegramDatePicker } from "@/components/ui/TelegramDatePicker"
+import { Switch } from '@/components/ui/switch'
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 interface ScheduledMessage {
   schedule_id: string;
@@ -39,6 +44,9 @@ interface ScheduleFormProps {
   onSubmit: (e: React.FormEvent) => Promise<void>
 }
 
+// Define max file size (10MB in bytes)
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 export function ScheduleForm({
   startDate,
   setStartDate,
@@ -60,6 +68,19 @@ export function ScheduleForm({
   
   // Create a ref for the file input
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Function to handle file input changes with size validation
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File is too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`);
+        e.target.value = ''; // Reset the input
+        return;
+      }
+      setMediaFile(file);
+    }
+  };
 
   return (
     <form onSubmit={(e) => {
@@ -133,7 +154,7 @@ export function ScheduleForm({
             name="media"
             className="hidden"
             aria-label="Upload media file"
-            onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
+            onChange={handleFileChange}
           />
           <Button
             type="button"
