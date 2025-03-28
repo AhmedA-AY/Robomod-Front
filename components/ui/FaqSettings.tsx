@@ -230,15 +230,25 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       const endpoint = '/api/toggle_faq'
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
       console.log('Toggling FAQ with URL:', urlString)
-
-      // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
+      console.log('Request details:', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-      }))
+      })
+
+      // Use the safe API call function with endpoint tracking
+      const response = await safeApiCall(endpoint, () => {
+        console.log('Making API call to:', urlString)
+        return fetch(urlString, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tg.initData}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      })
       
       if (!response.ok) {
         const errorText = await response.text()
