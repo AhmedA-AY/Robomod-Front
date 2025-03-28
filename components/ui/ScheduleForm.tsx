@@ -8,11 +8,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from 'lucide-react'
 import { FiUpload } from 'react-icons/fi'
 import { TelegramDatePicker } from "@/components/ui/TelegramDatePicker"
-import { Switch } from '@/components/ui/switch'
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 
 interface ScheduledMessage {
   schedule_id: string;
