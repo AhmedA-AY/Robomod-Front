@@ -20,7 +20,6 @@ interface EndpointTimestamps {
 }
 
 export default function FaqSettings({ chatId }: { chatId: string }) {
-  const [settings, setSettings] = useState<FaqSettings | null>({ enabled: false, message: '' })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState('')
@@ -154,7 +153,6 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         
         // Set the state with the retrieved settings
         if (data) {
-          setSettings(data)
           setMessage(data.message || '')
           setEnabled(data.enabled || false)
           // Reset retry count and fetch failed flag on success
@@ -163,7 +161,8 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         } else {
           // Handle empty response
           console.warn('Received empty data from API')
-          setSettings({ enabled: false, message: '' })
+          setMessage('')
+          setEnabled(false)
         }
       } catch (fetchError) {
         console.error('Error during fetch:', fetchError)
@@ -260,8 +259,8 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       // Update local state after successful API call
       setEnabled(newEnabledState)
       
-      // Also update the settings object
-      setSettings(prev => prev ? { ...prev, enabled: newEnabledState } : { enabled: newEnabledState, message: message })
+      // Update the settings object after successful API call
+      setMessage(message.trim())
     } catch (error) {
       console.error('Error toggling FAQ:', error)
       setError(error instanceof Error ? error.message : 'Failed to toggle FAQ')
@@ -320,7 +319,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       }
 
       // Update the settings object after successful API call
-      setSettings(prev => prev ? { ...prev, message: message.trim() } : { enabled: enabled, message: message.trim() })
+      setMessage(message.trim())
       
       // Show success notification or feedback to the user
       console.log('FAQ message saved successfully')
