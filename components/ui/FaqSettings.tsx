@@ -242,7 +242,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       const response = await safeApiCall(endpoint, () => {
         console.log('Making API call to:', urlString)
         return fetch(urlString, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${tg.initData}`,
             'Content-Type': 'application/json',
