@@ -22,6 +22,25 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
   const [enabled, setEnabled] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [lastApiCall, setLastApiCall] = useState(0)
+
+  // Helper function to ensure rate limiting compliance
+  const safeApiCall = async (apiCall: () => Promise<Response>): Promise<Response> => {
+    const now = Date.now()
+    const timeSinceLastCall = now - lastApiCall
+    
+    // Ensure at least 1100ms between API calls (adding 100ms buffer to the 1s rate limit)
+    if (timeSinceLastCall < 1100) {
+      const waitTime = 1100 - timeSinceLastCall
+      console.log(`Rate limiting: waiting ${waitTime}ms before API call`)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+    }
+    
+    // Update the last API call timestamp
+    setLastApiCall(Date.now())
+    
+    return apiCall()
+  }
 
   const fetchFaqSettings = useCallback(async () => {
     try {
@@ -33,36 +52,41 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      // Use direct string concatenation to avoid any URL parsing issues
-      const urlString = `https://robomod.dablietech.club/api/get_faq_settings?chat_id=${encodeURIComponent(chatId)}`;
-      console.log('Fetching FAQ settings from URL:', urlString);
+      // Use URLSearchParams to properly format query parameters
+      const params = new URLSearchParams()
+      params.append('chat_id', chatId)
+      
+      // Use direct string concatenation to avoid URL parsing issues
+      const urlString = `https://robomod.dablietech.club/api/get_faq_settings?${params.toString()}`
+      console.log('Fetching FAQ settings from URL:', urlString)
 
-      const response = await fetch(urlString, {
+      // Use the safe API call function
+      const response = await safeApiCall(() => fetch(urlString, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-      })
+      }))
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response from API:', errorText);
-        let errorMessage = 'Failed to fetch FAQ settings';
+        const errorText = await response.text()
+        console.error('Error response from API:', errorText)
+        let errorMessage = 'Failed to fetch FAQ settings'
         
         try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`;
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
         } catch {
           // If JSON parsing fails, use the error text
-          errorMessage = errorText || `${response.status} ${response.statusText}`;
+          errorMessage = errorText || `${response.status} ${response.statusText}`
         }
         
-        throw new Error(errorMessage);
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
-      console.log('Received FAQ settings:', data);
+      console.log('Received FAQ settings:', data)
       
       // Set the state with the retrieved settings
       if (data) {
@@ -71,7 +95,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         setEnabled(data.enabled || false)
       } else {
         // Handle empty response
-        console.warn('Received empty data from API');
+        console.warn('Received empty data from API')
         setSettings({ enabled: false, message: '' })
       }
     } catch (error) {
@@ -85,20 +109,23 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
     } finally {
       setIsLoading(false)
     }
-  }, [chatId, settings])
+  }, [chatId, settings, safeApiCall, lastApiCall])
 
-  // Retry mechanism for failed fetches
+  // Retry mechanism with exponential backoff for failed fetches
   useEffect(() => {
     if (error && retryCount < 3) {
-      const timer = setTimeout(() => {
-        console.log(`Retrying FAQ settings fetch (${retryCount + 1}/3)...`);
-        setRetryCount(prev => prev + 1);
-        fetchFaqSettings();
-      }, 2000);
+      // Exponential backoff: 2s, 4s, 8s
+      const backoffTime = Math.pow(2, retryCount + 1) * 1000
+      console.log(`Retrying FAQ settings fetch (${retryCount + 1}/3) after ${backoffTime/1000}s...`)
       
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+        setRetryCount(prev => prev + 1)
+        fetchFaqSettings()
+      }, backoffTime)
+      
+      return () => clearTimeout(timer)
     }
-  }, [error, retryCount, fetchFaqSettings]);
+  }, [error, retryCount, fetchFaqSettings])
 
   useEffect(() => {
     fetchFaqSettings()
@@ -114,31 +141,45 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
+      // Use URLSearchParams to properly format query parameters
+      const params = new URLSearchParams()
+      params.append('chat_id', chatId)
+      params.append('enabled', newEnabledState.toString())
+      
       // Use direct string concatenation for URL
-      const urlString = `https://robomod.dablietech.club/api/toggle_faq?chat_id=${encodeURIComponent(chatId)}&enabled=${newEnabledState}`;
-      console.log('Toggling FAQ with URL:', urlString);
+      const urlString = `https://robomod.dablietech.club/api/toggle_faq?${params.toString()}`
+      console.log('Toggling FAQ with URL:', urlString)
 
-      const response = await fetch(urlString, {
+      // Use the safe API call function
+      const response = await safeApiCall(() => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-      })
+      }))
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || 'Failed to toggle FAQ')
+        const errorText = await response.text()
+        console.error('Error toggling FAQ:', errorText)
+        let errorMessage = 'Failed to toggle FAQ settings'
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
+        } catch {
+          // If JSON parsing fails, use the error text
+          errorMessage = errorText || `${response.status} ${response.statusText}`
+        }
+        
+        throw new Error(errorMessage)
       }
 
-      // Update local state
+      // Update local state after successful API call
       setEnabled(newEnabledState)
-      if (settings) {
-        setSettings({
-          ...settings,
-          enabled: newEnabledState
-        })
-      }
+      
+      // Also update the settings object
+      setSettings(prev => prev ? { ...prev, enabled: newEnabledState } : { enabled: newEnabledState, message: message })
     } catch (error) {
       console.error('Error toggling FAQ:', error)
       setError(error instanceof Error ? error.message : 'Failed to toggle FAQ')
@@ -162,30 +203,45 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error('FAQ message cannot be empty')
       }
 
+      // Use URLSearchParams to properly format query parameters
+      const params = new URLSearchParams()
+      params.append('chat_id', chatId)
+      params.append('message', message.trim())
+      
       // Use direct string concatenation for URL
-      const urlString = `https://robomod.dablietech.club/api/set_faq_message?chat_id=${encodeURIComponent(chatId)}&message=${encodeURIComponent(message.trim())}`;
-      console.log('Saving FAQ message with URL:', urlString);
+      const urlString = `https://robomod.dablietech.club/api/set_faq_message?${params.toString()}`
+      console.log('Saving FAQ message with URL:', urlString)
 
-      const response = await fetch(urlString, {
+      // Use the safe API call function
+      const response = await safeApiCall(() => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-      })
+      }))
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || 'Failed to save FAQ message')
+        const errorText = await response.text()
+        console.error('Error saving FAQ message:', errorText)
+        let errorMessage = 'Failed to save FAQ message'
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
+        } catch {
+          // If JSON parsing fails, use the error text
+          errorMessage = errorText || `${response.status} ${response.statusText}`
+        }
+        
+        throw new Error(errorMessage)
       }
 
-      // Update local state
-      if (settings) {
-        setSettings({
-          ...settings,
-          message: message.trim()
-        })
-      }
+      // Update the settings object after successful API call
+      setSettings(prev => prev ? { ...prev, message: message.trim() } : { enabled: enabled, message: message.trim() })
+      
+      // Show success notification or feedback to the user
+      console.log('FAQ message saved successfully')
     } catch (error) {
       console.error('Error saving FAQ message:', error)
       setError(error instanceof Error ? error.message : 'Failed to save FAQ message')
