@@ -98,8 +98,49 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
         throw new Error(errorMessage)
       }
 
-      const data = await response.json()
-      console.log('Received FAQ settings:', data)
+      // Get response as text first so we can inspect and handle malformed JSON
+      const responseText = await response.text()
+      console.log('Raw API response:', responseText)
+      
+      let data
+      
+      try {
+        // Try to parse the response as JSON
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError)
+        console.warn('Attempting to fix malformed JSON response')
+        
+        // Basic fix for known malformed response format
+        // The API sometimes returns: "faq": ( "enabled": false, "message_id*: null
+        // Try to extract values using regex as a fallback
+        let enabled = false
+        let message = ''
+        
+        try {
+          // Try to extract "enabled" value
+          const enabledMatch = responseText.match(/"enabled"\s*:\s*(true|false)/)
+          if (enabledMatch && enabledMatch[1]) {
+            enabled = enabledMatch[1] === 'true'
+          }
+          
+          // Try to extract message
+          const messageMatch = responseText.match(/"message(?:_id)?"\s*:\s*"([^"]*)"/)
+          if (messageMatch && messageMatch[1]) {
+            message = messageMatch[1]
+          }
+          
+          // Create a valid data object
+          data = { enabled, message }
+          console.log('Extracted data from malformed JSON:', data)
+        } catch (extractError) {
+          console.error('Failed to extract data from malformed JSON:', extractError)
+          // Fallback to default values
+          data = { enabled: false, message: '' }
+        }
+      }
+      
+      console.log('Processed FAQ settings:', data)
       
       // Set the state with the retrieved settings
       if (data) {
