@@ -231,7 +231,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
       console.log('Toggling FAQ with URL:', urlString)
       console.log('Request details:', {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
