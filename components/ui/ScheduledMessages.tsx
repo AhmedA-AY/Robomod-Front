@@ -129,6 +129,8 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     setError(null) // Clear any previous errors
     
     try {
+      console.log("Starting form submission for scheduled message");
+      
       const tg = window?.Telegram?.WebApp
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
@@ -156,97 +158,88 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
 
-      // Manual URL construction - hardcoded to avoid typos
-      const endpoint = editingMessage
-        ? "/api/edit_scheduled_message"
-        : "/api/add_scheduled_message";
-      
-      // Fixed URL construction - explicitly using 'chat_id' (NOT chat_d or chat_jd)
+      // Build the API endpoint
+      const isEditing = !!editingMessage;
+      const endpoint = isEditing ? "/api/edit_scheduled_message" : "/api/add_scheduled_message";
       const baseUrl = "https://robomod.dablietech.club" + endpoint;
       
-      if (editingMessage) {
-        // Use a URLSearchParams to ensure properly formatted query parameters
-        const params = new URLSearchParams();
-        params.append("chat_id", chatId);
+      // Prepare the URL parameters
+      const params = new URLSearchParams();
+      params.append("chat_id", chatId);
+      
+      if (isEditing && editingMessage) {
         params.append("schedule_id", editingMessage.schedule_id);
-        params.append("starting_at", startingAt.toString());
-        params.append("interval", intervalSeconds.toString());
         params.append("enabled", isEnabled.toString());
-        
-        const editUrl = `${baseUrl}?${params.toString()}`;
-        
-        // Create form data
-        const formData = new FormData();
-        
-        // Only add message_text if changed
-        if (newMessage.trim() !== editingMessage.message_text) {
-          formData.append('message_text', newMessage);
-        }
-        
-        // Handle media
-        if (mediaFile) {
-          console.log("Adding media file:", mediaFile.name, mediaFile.type, "Size:", (mediaFile.size / (1024 * 1024)).toFixed(2) + "MB");
-          formData.append('media', mediaFile);
-        }
-        
-        console.log("Editing scheduled message at URL:", editUrl);
-        console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
-        
-        const response = await fetch(editUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-          },
-          body: formData
-        });
-        
-        await handleApiResponse(response, "edit");
-      } else {
-        // Use a URLSearchParams to ensure properly formatted query parameters
-        const params = new URLSearchParams();
-        params.append("chat_id", chatId);
-        params.append("starting_at", startingAt.toString());
-        params.append("interval", intervalSeconds.toString());
-        
-        const addUrl = `${baseUrl}?${params.toString()}`;
-        
-        console.log("Adding scheduled message at URL:", addUrl);
-        
-        try {
-          // Create FormData for the message and media
-          const formData = new FormData();
-          
-          // Add message text if present
-          if (newMessage.trim()) {
-            formData.append('message_text', newMessage.trim());
-          }
-          
-          // Handle file upload with detailed logging
-          if (mediaFile) {
-            console.log("Processing file:", mediaFile.name, mediaFile.type, (mediaFile.size / (1024 * 1024)).toFixed(2) + "MB");
-            
-            // Add file directly to form data
-            formData.append('media', mediaFile);
-            
-            console.log("Added file to FormData");
-          }
-          
-          console.log("Form data fields:", [...formData.entries()].map(e => e[0]).join(", "));
-          
-          const response = await fetch(addUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${tg.initData}`,
-            },
-            body: formData
-          });
-          
-          await handleApiResponse(response, "add");
-        } catch (fileError) {
-          console.error("Error processing file:", fileError);
-          throw new Error("Failed to process media file: " + (fileError instanceof Error ? fileError.message : String(fileError)));
-        }
       }
+      
+      params.append("starting_at", startingAt.toString());
+      params.append("interval", intervalSeconds.toString());
+      
+      const url = `${baseUrl}?${params.toString()}`;
+      console.log(`${isEditing ? "Editing" : "Adding"} scheduled message at URL:`, url);
+      
+      // Prepare the form data
+      const formData = new FormData();
+      
+      if (newMessage.trim()) {
+        formData.append('message_text', newMessage.trim());
+        console.log("Added message_text to form data:", newMessage.trim());
+      }
+      
+      if (mediaFile) {
+        console.log("Adding media file to form data:", mediaFile.name, mediaFile.type, 
+                   `${(mediaFile.size / (1024 * 1024)).toFixed(2)}MB`);
+        formData.append('media', mediaFile);
+      }
+      
+      // Log all form data fields for debugging
+      console.log("Form data entries:", [...formData.entries()].map(e => {
+        if (e[0] === 'media') {
+          return `${e[0]}: [File ${(e[1] as File).name}]`;
+        }
+        return `${e[0]}: ${e[1]}`;
+      }));
+      
+      // Make the API request
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`
+          // Note: Do NOT set 'Content-Type' header when using FormData
+        },
+        body: formData
+      });
+      
+      console.log("API response status:", response.status, response.statusText);
+      
+      // Process the response
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API Error Response:`, errorText);
+        
+        let errorMessage = isEditing 
+          ? 'Failed to edit scheduled message' 
+          : 'Failed to add scheduled message';
+        
+        // Check for specific status codes
+        if (response.status === 413) {
+          errorMessage = "File is too large. Please upload a smaller file (maximum 10MB).";
+        } else if (response.status === 429) {
+          errorMessage = "Too many requests. Please try again later.";
+        } else {
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData?.detail || errorData?.message || errorMessage;
+          } catch {
+            // If JSON parsing fails, use the error text
+            errorMessage = errorText || errorMessage;
+          }
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      console.log(`Scheduled message ${isEditing ? "updated" : "created"} successfully`);
       
       // Success - reset form and refresh
       resetForm();
@@ -256,34 +249,6 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       setError(error instanceof Error ? error.message : 'Failed to process request')
     } finally {
       setIsSubmitting(false)
-    }
-  }
-  
-  // Helper function to handle API responses
-  const handleApiResponse = async (response: Response, operation: "add" | "edit") => {
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API Error Response (${operation}):`, errorText);
-      
-      let errorMessage = 
-        operation === "edit" ? 'Failed to edit scheduled message' : 'Failed to add scheduled message';
-      
-      // Check for specific status codes
-      if (response.status === 413) {
-        errorMessage = "File is too large. Please upload a smaller file (maximum 10MB).";
-      } else if (response.status === 429) {
-        errorMessage = "Too many requests. Please try again later.";
-      } else {
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData?.detail || errorData?.message || errorMessage;
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || errorMessage;
-        }
-      }
-      
-      throw new Error(errorMessage);
     }
   }
   

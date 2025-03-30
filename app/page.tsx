@@ -7,6 +7,8 @@ import { MessageCircle, MessageSquare, Menu, HelpCircle } from 'lucide-react'
 import AIChatInterface from '@/components/ui/AIChatInterface'
 import ScheduledMessages from '@/components/ui/ScheduledMessages'
 import FaqSettings from '@/components/ui/FaqSettings'
+import GreetingSettings from '@/components/ui/GreetingSettings'
+import GoodbyeSettings from '@/components/ui/GoodbyeSettings'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Chat {
@@ -50,6 +52,8 @@ export default function Home() {
     { id: 'ai', label: 'AI Assistant', icon: <MessageCircle className="w-5 h-5" />, color: 'text-blue-500' },
     { id: 'scheduled', label: 'Scheduled Posts', icon: <MessageSquare className="w-5 h-5" />, color: 'text-emerald-500' },
     { id: 'faq', label: 'FAQ Settings', icon: <HelpCircle className="w-5 h-5" />, color: 'text-amber-500' },
+    { id: 'greeting', label: 'Greeting', icon: <MessageCircle className="w-5 h-5" />, color: 'text-purple-500' },
+    { id: 'goodbye', label: 'Goodbye', icon: <MessageSquare className="w-5 h-5" />, color: 'text-pink-500' },
   ]
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
@@ -160,7 +164,10 @@ export default function Home() {
             {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
             {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
             {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
-            {activeTab !== 'ai' && activeTab !== 'scheduled' && activeTab !== 'faq' && (
+            {activeTab === 'greeting' && <GreetingSettings chatId={selectedChat.id.toString()} />}
+            {activeTab === 'goodbye' && <GoodbyeSettings chatId={selectedChat.id.toString()} />}
+            {activeTab !== 'ai' && activeTab !== 'scheduled' && activeTab !== 'faq' && 
+             activeTab !== 'greeting' && activeTab !== 'goodbye' && (
               <div className="h-full flex items-center justify-center p-4">
                 <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl border border-border">
                   <div className="flex flex-col items-center justify-center text-center gap-4">
