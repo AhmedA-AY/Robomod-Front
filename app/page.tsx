@@ -7,11 +7,6 @@ import { MessageCircle, MessageSquare, Menu, HelpCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import AIChatInterface from '@/components/ui/AIChatInterface'
-import ScheduledMessages from '@/components/ui/ScheduledMessages'
-import FaqSettings from '@/components/ui/FaqSettings'
-import GreetingSettings from '@/components/ui/GreetingSettings'
-import GoodbyeSettings from '@/components/ui/GoodbyeSettings'
 
 interface Chat {
   id: number;
@@ -46,23 +41,23 @@ export function useChatContext() {
 }
 
 // Dynamically import components with ssr: false to avoid hydration issues
-const AIChatInterfaceDynamic = dynamic(() => import('@/components/ui/AIChatInterface'), { 
+const AIChatInterface = dynamic(() => import('@/components/ui/AIChatInterface'), { 
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
-const ScheduledMessagesDynamic = dynamic(() => import('@/components/ui/ScheduledMessages'), { 
+const ScheduledMessages = dynamic(() => import('@/components/ui/ScheduledMessages'), { 
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
-const FaqSettingsDynamic = dynamic(() => import('@/components/ui/FaqSettings'), { 
+const FaqSettings = dynamic(() => import('@/components/ui/FaqSettings'), { 
   ssr: false, 
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
-const GreetingSettingsDynamic = dynamic(() => import('@/components/ui/GreetingSettings'), { 
+const GreetingSettings = dynamic(() => import('@/components/ui/GreetingSettings'), { 
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
-const GoodbyeSettingsDynamic = dynamic(() => import('@/components/ui/GoodbyeSettings'), { 
+const GoodbyeSettings = dynamic(() => import('@/components/ui/GoodbyeSettings'), { 
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
@@ -191,11 +186,11 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="flex-1 overflow-hidden"
           >
-            {activeTab === 'ai' && <AIChatInterfaceDynamic chatId={selectedChat.id} />}
-            {activeTab === 'scheduled' && <ScheduledMessagesDynamic chatId={selectedChat.id.toString()} />}
-            {activeTab === 'faq' && <FaqSettingsDynamic chatId={selectedChat.id.toString()} />}
-            {activeTab === 'greeting' && <GreetingSettingsDynamic chatId={selectedChat.id.toString()} />}
-            {activeTab === 'goodbye' && <GoodbyeSettingsDynamic chatId={selectedChat.id.toString()} />}
+            {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
+            {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
+            {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
+            {activeTab === 'greeting' && <GreetingSettings chatId={selectedChat.id.toString()} />}
+            {activeTab === 'goodbye' && <GoodbyeSettings chatId={selectedChat.id.toString()} />}
             {activeTab !== 'ai' && activeTab !== 'scheduled' && activeTab !== 'faq' && 
              activeTab !== 'greeting' && activeTab !== 'goodbye' && (
               <div className="h-full flex items-center justify-center p-4">
