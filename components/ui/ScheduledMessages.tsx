@@ -8,7 +8,13 @@ import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { ScheduleForm } from "@/components/ui/ScheduleForm"
+import dynamic from 'next/dynamic'
+
+// Dynamically import the form to prevent hydration issues
+const ScheduleForm = dynamic(() => import('@/components/ui/ScheduleForm').then(mod => mod.ScheduleForm), {
+  ssr: false,
+  loading: () => <div className="p-4">Loading form...</div>
+})
 
 interface ScheduledMessage {
   schedule_id: string;
@@ -55,6 +61,12 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [interval, setInterval] = useState('60') // Default 60 minutes
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null)
   const [isEnabled, setIsEnabled] = useState<boolean>(true)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Only run client-side to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const fetchScheduledMessages = useCallback(async () => {
     try {
@@ -119,8 +131,10 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   }, [chatId])
 
   useEffect(() => {
-    fetchScheduledMessages()
-  }, [fetchScheduledMessages])
+    if (isMounted) {
+      fetchScheduledMessages()
+    }
+  }, [fetchScheduledMessages, isMounted])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -302,7 +316,8 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     setIsEnabled(message.enabled)
   }
 
-  if (isLoading) {
+  // Show loading spinner during SSR or initial mount
+  if (!isMounted || isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />

@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -57,6 +58,14 @@ export function ScheduleForm({
   setIsEnabled,
   onSubmit
 }: ScheduleFormProps) {
+  // Add client-side only state to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Only initialize client-side
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
   // Only require valid interval for form submission
   const hasValidInterval = !isNaN(parseInt(interval)) && parseInt(interval) > 0;
   const canSubmit = hasValidInterval;
@@ -76,6 +85,11 @@ export function ScheduleForm({
       setMediaFile(file);
     }
   };
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return <div className="p-4">Loading form...</div>;
+  }
 
   return (
     <form onSubmit={(e) => {

@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,9 +15,16 @@ interface TelegramDatePickerProps {
 }
 
 export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: TelegramDatePickerProps) {
-  const [isOpen, setIsOpen] = React.useState(false)
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(date))
-  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Initialize client-side only to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+    setCurrentMonth(new Date(date));
+  }, [date]);
 
   // Get days in month
   const getDaysInMonth = (year: number, month: number) => {
@@ -29,14 +37,17 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
   }
 
   const handlePrevMonth = () => {
+    if (!currentMonth) return;
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
   }
 
   const handleNextMonth = () => {
+    if (!currentMonth) return;
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
   }
 
   const handleDateSelect = (day: number) => {
+    if (!currentMonth) return;
     const newDate = new Date(date)
     newDate.setFullYear(currentMonth.getFullYear())
     newDate.setMonth(currentMonth.getMonth())
@@ -53,7 +64,7 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
   }
 
   // Close the calendar when clicking outside
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false)
@@ -68,6 +79,8 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
 
   // Generate calendar days
   const renderCalendar = () => {
+    if (!currentMonth) return [];
+    
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
     const daysInMonth = getDaysInMonth(year, month)
@@ -119,6 +132,16 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
     
     return days
   }
+  
+  // Only render when mounted (client-side)
+  if (!isMounted) {
+    return (
+      <div className="relative w-full">
+        <Label className="text-gray-300">{label}</Label>
+        <div className="h-10 bg-[#374151] border border-gray-600 rounded-md"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full" ref={containerRef}>
@@ -132,7 +155,7 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
         {format(date, "PPP p")}
       </Button>
       
-      {isOpen && (
+      {isOpen && currentMonth && (
         <div 
           className="absolute z-[9999] mt-1 bg-[#2d3748] border border-gray-600 rounded-md shadow-lg"
           style={{ 
