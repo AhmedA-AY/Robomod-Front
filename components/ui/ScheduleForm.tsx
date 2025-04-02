@@ -154,13 +154,39 @@ export function ScheduleForm({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button
-          type="submit"
-          disabled={!canSubmit || isSubmitting}
-          className="bg-blue-500 hover:bg-blue-600 text-white"
+      <div className="flex gap-4 items-center">
+        <div className="flex-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            id="media"
+            name="media"
+            className="hidden"
+            aria-label="Upload media file"
+            onChange={handleFileChange}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
+          >
+            <FiUpload className="w-4 h-4 mr-2" />
+            {mediaFile ? mediaFile.name : 'Upload Media'}
+          </Button>
+        </div>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || !canSubmit}
+          className="min-w-[140px] bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600"
         >
-          {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit"}
+          {isSubmitting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : editingMessage ? (
+            'Update Message'
+          ) : (
+            'Schedule Message'
+          )}
         </Button>
       </div>
     </form>
