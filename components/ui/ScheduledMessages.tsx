@@ -209,7 +209,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       // Log all form data fields for debugging
       console.log("Form data entries:", [...formData.entries()].map(e => {
         if (e[0] === 'media') {
-          return `${e[0]}: [File ${(e[1] as File).name}]`;
+          return `${e[0]}: [File ${(e[1] as File).name}, type: ${(e[1] as File).type}, size: ${(e[1] as File).size} bytes]`;
         }
         return `${e[0]}: ${e[1]}`;
       }));
@@ -232,6 +232,8 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`API Error Response:`, errorText);
+        console.error(`API Error Status:`, response.status);
+        console.error(`API Error Headers:`, Object.fromEntries(response.headers.entries()));
         
         let errorMessage = isEditing 
           ? 'Failed to edit scheduled message' 
