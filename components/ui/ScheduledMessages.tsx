@@ -215,6 +215,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       }));
       
       // Make the API request
+      console.log("Making API request to:", url);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -225,6 +226,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       });
       
       console.log("API response status:", response.status, response.statusText);
+      console.log("API response headers:", Object.fromEntries(response.headers.entries()));
       
       // Process the response
       if (!response.ok) {
