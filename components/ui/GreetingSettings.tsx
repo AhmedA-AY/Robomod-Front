@@ -212,7 +212,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
       console.log('Toggling greeting with URL:', urlString)
       console.log('Request details:', {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
@@ -223,7 +223,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       const response = await safeApiCall(endpoint, () => {
         console.log('Making API call to:', urlString)
         return fetch(urlString, {
-          method: 'GET',
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${tg.initData}`,
             'Content-Type': 'application/json',
