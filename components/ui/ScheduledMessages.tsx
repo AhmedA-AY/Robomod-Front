@@ -145,16 +145,16 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         return;
       }
 
-      // --- Updated URL Construction ---
-      const baseUrl = `https://robomod.dablietech.club/api/message`; // Use new base path
+      // --- URL Construction (already updated) ---
+      const baseUrl = `https://robomod.dablietech.club/api/message`;
       const url = new URL(baseUrl);
-      url.searchParams.append('chat_id', chatId); // Add chat_id as query param
-      url.searchParams.append('message_id', messageId.toString()); // Add message_id as query param
-      // --- End Updated URL Construction ---
+      url.searchParams.append('chat_id', chatId);
+      url.searchParams.append('message_id', messageId.toString());
+      // --- End URL Construction ---
 
-      console.log(`Fetching message content from: ${url.toString()}`); // Log the new URL
+      console.log(`Fetching message content from: ${url.toString()}`);
 
-      const response = await fetch(url.toString(), { // Fetch using the new URL object
+      const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -172,20 +172,24 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       const data = await response.json();
       console.log(`Fetched content for message ${messageId}:`, data);
 
-      // Store fetched content (assuming API response structure is the same)
+      // --- Updated State Update Logic ---
+      // Access nested message object from the response
+      const messageData = data?.message;
+
       setMessageContents(prev => ({
         ...prev,
         [messageId]: {
-          fetched_message_text: data?.message_text,
-          fetched_media_type: data?.media_type || (data?.message_text ? 'text' : undefined),
+          fetched_message_text: messageData?.text, // Get text from data.message.text
+          fetched_media_type: messageData?.media_type || (messageData?.text ? 'text' : undefined), // Get media_type or derive from text
         }
       }));
+      // --- End Updated State Update Logic ---
 
     } catch (error) {
       console.error(`Error fetching content for message ${messageId}:`, error);
       setMessageContents(prev => ({ ...prev, [messageId]: { fetched_media_type: undefined } })); // Mark as failed
     }
-  }, [chatId, messageContents]); // Include messageContents dependency
+  }, [chatId, messageContents]);
 
   useEffect(() => {
     if (isMounted) {
