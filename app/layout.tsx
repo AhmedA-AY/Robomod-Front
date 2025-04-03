@@ -2,7 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import TelegramThemeProvider from '@/components/TelegramThemeProvider'
-import { TelegramScript } from '@/components/TelegramScript'
+import TelegramScript from '@/components/TelegramScript'
 import ClientLayout from './ClientLayout'
 import { ChatProvider } from './page'
 

@@ -22,36 +22,45 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
   const [error, setError] = useState<string | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  const handleSendMessage = async () => {
-    if (!message.trim()) return
-    
-    // Add user message
-    const newMessages = [...history, { role: 'user' as const, content: message }]
-    setHistory(newMessages)
-    setMessage('')
-    
-    // Simulate AI typing
-    setIsLoading(true)
-    
+  const fetchHistory = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      // Simulate AI response with a more natural delay
-      setTimeout(() => {
-        setIsLoading(false)
-        setHistory([
-          ...newMessages,
-          { 
-            role: 'assistant' as const, 
-            content: `This is a simulated response for chat ID: ${chatId || 'unknown'}. In a real implementation, this would call an API with the chat ID.` 
-          }
-        ])
-      }, 1500)
+      console.log("History fetched (placeholder)");
+      setHistory([]);
     } catch (e) {
-      console.error("Failed to send message:", e)
-      setError('Failed to send message. Please check your connection.')
+      console.error("Failed to fetch history:", e);
+      setError('Failed to load chat history. Please try again later.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+
+    const userMessage: ChatMessage = { role: 'user', content: message };
+    setHistory(prev => [...prev, userMessage]);
+    setMessage('');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log("Message sent, waiting for reply (placeholder)");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const assistantMessage: ChatMessage = { role: 'assistant', content: "This is a placeholder reply." };
+      setHistory(prev => [...prev, assistantMessage]);
+    } catch (e) {
+      console.error("Failed to send message:", e);
+      setError('Failed to send message. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, [chatId]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -123,10 +132,11 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
         >
         <div className="flex gap-2 items-end">
           <div
-            className="flex-1 rounded-lg overflow-hidden border focus-within:ring-1 focus-within:ring-[var(--tg-theme-button-color,#3b82f6)]"
+            className="flex-1 rounded-lg overflow-hidden border focus-within:ring-1"
              style={{
                backgroundColor: 'var(--tg-theme-bg-color, #111827)',
                borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+               '--ring-color': 'var(--tg-theme-button-color, #3b82f6)'
              }}
           >
             <Textarea
