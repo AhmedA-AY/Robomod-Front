@@ -9,6 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from 'lucide-react'
 import { FiUpload } from 'react-icons/fi'
 import { TelegramDatePicker } from "@/components/ui/TelegramDatePicker"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface ScheduledMessage {
   schedule_id: string;
@@ -156,7 +162,7 @@ export function ScheduleForm({
 
       <div className="flex items-center gap-4">
         {/* File Upload Section - Allow to shrink and truncate text */}
-        <div className="flex-1 min-w-0"> 
+        <div className="flex-1 min-w-0">
           <input
             ref={fileInputRef}
             type="file"
@@ -166,25 +172,47 @@ export function ScheduleForm({
             aria-label="Upload media file"
             onChange={handleFileChange}
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700 flex items-center justify-start text-left overflow-hidden"
-          >
-            <FiUpload className="w-4 h-4 mr-2 flex-shrink-0" />
-            {/* Truncate filename if too long */}
-            <span className="truncate">
-              {mediaFile ? mediaFile.name : 'Upload Media'}
-            </span>
-          </Button>
+          {/* Wrap Button with Tooltip */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full text-left overflow-hidden flex items-center justify-start"
+                  style={{
+                    backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+                    color: 'var(--tg-theme-text-color, white)',
+                    borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+                  }}
+                >
+                  <FiUpload className="w-4 h-4 mr-2 flex-shrink-0" />
+                  {/* Truncate filename if too long */}
+                  <span className="truncate">
+                    {mediaFile ? mediaFile.name : 'Upload Media'}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              {/* Show full filename in Tooltip only if a file is selected */}
+              {mediaFile && (
+                <TooltipContent>
+                  <p>{mediaFile.name}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
         {/* Submit Button Section - Fixed width */}
         <div className="flex-shrink-0">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isSubmitting || !canSubmit}
-            className="min-w-[140px] bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600 flex items-center justify-center"
+            style={{
+              backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+              color: 'var(--tg-theme-button-text-color, white)',
+            }}
+            className="min-w-[140px] flex items-center justify-center disabled:opacity-50"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

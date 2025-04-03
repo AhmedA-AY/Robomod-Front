@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Loader2 } from 'lucide-react'
+import { Clock, Loader2, Image as ImageIcon, Video } from 'lucide-react'
 import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 import * as React from "react"
 import { cn } from "@/lib/utils"
@@ -28,6 +28,8 @@ interface ScheduledMessage {
   next_run: number;
   message_text?: string;
   media?: string;
+  fetched_message_text?: string;
+  fetched_media_type?: 'photo' | 'video' | 'document' | 'text';
 }
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
@@ -62,6 +64,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null)
   const [isEnabled, setIsEnabled] = useState<boolean>(true)
   const [isMounted, setIsMounted] = useState(false)
+  const [messageContents, setMessageContents] = useState<Record<string, Partial<ScheduledMessage>>>({}) // Store fetched content
 
   // Only run client-side to prevent hydration mismatch
   useEffect(() => {
@@ -130,11 +133,80 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     }
   }, [chatId])
 
+  // Function to fetch content for a single message
+  const fetchMessageContent = useCallback(async (messageId: number) => {
+    // Avoid refetching if already loaded
+    if (messageContents[messageId]) return;
+
+    try {
+      const tg = window?.Telegram?.WebApp;
+      if (!tg || !tg.initData) {
+        console.error('Telegram Web App not initialized for fetching message content');
+        return;
+      }
+
+      const url = `https://robomod.dablietech.club/api/messages/${chatId}/${messageId}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error(`Failed to fetch content for message ${messageId}:`, errorData?.message || response.statusText);
+        // Store error state or partial data?
+        setMessageContents(prev => ({ ...prev, [messageId]: { fetched_media_type: undefined } })); // Mark as failed
+        return;
+      }
+
+      const data = await response.json();
+      console.log(`Fetched content for message ${messageId}:`, data);
+
+      // Assuming API returns { message_text: '...', media_type: 'photo'/'video'/'document' } or similar
+      setMessageContents(prev => ({
+        ...prev,
+        [messageId]: {
+          fetched_message_text: data?.message_text,
+          fetched_media_type: data?.media_type || (data?.message_text ? 'text' : undefined),
+        }
+      }));
+
+    } catch (error) {
+      console.error(`Error fetching content for message ${messageId}:`, error);
+      setMessageContents(prev => ({ ...prev, [messageId]: { fetched_media_type: undefined } })); // Mark as failed
+    }
+  }, [chatId, messageContents]); // Include messageContents dependency
+
   useEffect(() => {
     if (isMounted) {
       fetchScheduledMessages()
     }
   }, [fetchScheduledMessages, isMounted])
+
+  // Fetch message content when messages list changes
+  useEffect(() => {
+    if (messages.length > 0) {
+      messages.forEach(msg => {
+        // Check if message_id is valid before fetching
+        if (msg.message_id && msg.message_id !== 0) { 
+          fetchMessageContent(msg.message_id);
+        } else {
+          console.warn(`Skipping fetch for message with invalid ID:`, msg);
+          // Optionally set a default state for messages with no ID
+          setMessageContents(prev => ({
+            ...prev,
+            [msg.schedule_id]: { // Use schedule_id as key if message_id is invalid
+              fetched_message_text: msg.message_text, // Use original text if available
+              fetched_media_type: msg.message_text ? 'text' : undefined
+            }
+          }));
+        }
+      });
+    }
+  }, [messages, fetchMessageContent]); // Depend on messages list and the fetch function
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -341,14 +413,23 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="p-6 border-b border-gray-700/50">
-        <h2 className="text-2xl font-semibold tracking-tight">Scheduled Messages</h2>
-        <p className="text-sm text-gray-400 mt-1">Create and manage automated posts</p>
+    <div 
+      className="h-full flex flex-col text-white"
+      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1a202c)' }} // Use Telegram bg color with fallback
+    >
+      <div className="p-6 border-b border-[var(--tg-theme-hint-color,rgba(255,255,255,0.1))] backdrop-blur-sm">
+        <h2 className="text-2xl font-semibold tracking-tight text-[var(--tg-theme-text-color,white)]">Scheduled Messages</h2>
+        <p className="text-sm text-[var(--tg-theme-hint-color,#a0aec0)] mt-1">Create and manage automated posts</p>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm mb-8 shadow-xl">
+        <Card 
+          className="mb-8 shadow-xl border-none"
+          style={{
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)', // Use secondary bg for card
+            borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
+          }}
+        >
           <CardContent className="p-6">
             <ScheduleForm
               startDate={startDate}
@@ -370,50 +451,89 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
         <div className="space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700/50 backdrop-blur-sm">
+            <div 
+              className="text-center py-12 rounded-xl border backdrop-blur-sm"
+              style={{
+                backgroundColor: 'var(--tg-theme-secondary-bg-color, rgba(0,0,0,0.2))',
+                borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
+              }}
+            >
               <div className="bg-blue-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="w-8 h-8 text-blue-400" />
               </div>
-              <h3 className="text-xl font-medium text-white mb-2">No Scheduled Messages</h3>
-              <p className="text-gray-400 max-w-sm mx-auto">Create your first scheduled post to start automating your content delivery</p>
+              <h3 className="text-xl font-medium text-[var(--tg-theme-text-color,white)] mb-2">No Scheduled Messages</h3>
+              <p className="text-[var(--tg-theme-hint-color,#a0aec0)] max-w-sm mx-auto">Create your first scheduled post to start automating your content delivery</p>
             </div>
           ) : (
             messages.map((message) => (
-              <Card key={message.schedule_id} className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm hover:bg-gray-800/70 transition-colors">
+              <Card 
+                key={message.schedule_id} 
+                className="backdrop-blur-sm hover:brightness-110 transition-all border-none shadow-md"
+                style={{
+                  backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)', // Use secondary bg for card
+                  borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
+                }}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="bg-blue-500/10 p-2 rounded-lg shrink-0">
-                      <Clock className="w-5 h-5 text-blue-400" />
+                      {(() => {
+                        // Use schedule_id as fallback key if message_id is 0
+                        const contentKey = message.message_id && message.message_id !== 0 ? message.message_id : message.schedule_id;
+                        const content = messageContents[contentKey];
+                        switch (content?.fetched_media_type) {
+                          case 'photo': return <ImageIcon className="w-5 h-5 text-blue-400" />;
+                          case 'video': return <Video className="w-5 h-5 text-blue-400" />;
+                          // Using Clock as temporary placeholder for document/text icon
+                          case 'document': return <Clock className="w-5 h-5 text-blue-400" />;
+                          case 'text': return <Clock className="w-5 h-5 text-blue-400" />;
+                          default: return <Clock className="w-5 h-5 text-blue-400" />; // Default or loading
+                        }
+                      })()}
                     </div>
                     <div className="flex-grow min-w-0">
-                      <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <span className="font-medium text-white">Message ID:</span>
-                          {message.message_id}
+                      <div className="mb-2 text-[var(--tg-theme-text-color,white)] break-words line-clamp-3">
+                        {(() => {
+                          // Use schedule_id as fallback key if message_id is 0
+                          const contentKey = message.message_id && message.message_id !== 0 ? message.message_id : message.schedule_id;
+                          const content = messageContents[contentKey];
+                          if (content?.fetched_message_text) {
+                            return content.fetched_message_text;
+                          } else if (content?.fetched_media_type && content.fetched_media_type !== 'text') {
+                            return <span className="italic text-[var(--tg-theme-hint-color,#a0aec0)]">{`${content.fetched_media_type.charAt(0).toUpperCase() + content.fetched_media_type.slice(1)} file`}</span>;
+                          } else if (message.message_id === 0 || content === undefined) {
+                            // Loading or invalid ID state
+                            return <span className="italic text-[var(--tg-theme-hint-color,#a0aec0)]">Loading content...</span>;
+                          } else {
+                            // Fallback if fetch failed or no content
+                            return <span className="italic text-[var(--tg-theme-hint-color,#a0aec0)]">Content unavailable</span>;
+                          }
+                        })()}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm">
+                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
+                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Starts:</span>
+                          {format(new Date(message.starting_at * 1000), "PP p")}
                         </div>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <span className="font-medium text-white">Starts:</span>
-                          {format(new Date(message.starting_at * 1000), "PPP p")}
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <span className="font-medium text-white">Interval:</span>
-                          {Math.round(message.interval / 60)} minutes
+                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
+                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Interval:</span>
+                          {Math.round(message.interval / 60)} min
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${message.enabled ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                          <span className="text-gray-400">
+                          <span className="text-[var(--tg-theme-hint-color,#a0aec0)]">
                             {message.enabled ? 'Active' : 'Paused'}
                           </span>
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <span className="font-medium text-white">Last Run:</span>
-                          {format(new Date(message.last_run * 1000), "PPP p")}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm">
+                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
+                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Last Run:</span>
+                          {message.last_run ? format(new Date(message.last_run * 1000), "PP p") : 'Never'}
                         </div>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <span className="font-medium text-white">Next Run:</span>
-                          {format(new Date(message.next_run * 1000), "PPP p")}
+                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
+                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Next Run:</span>
+                          {format(new Date(message.next_run * 1000), "PP p")}
                         </div>
                       </div>
                     </div>
@@ -422,7 +542,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(message)}
-                        className="h-9 w-9 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+                        className="h-9 w-9 text-[var(--tg-theme-hint-color,#a0aec0)] hover:bg-[var(--tg-theme-button-color,rgba(255,255,255,0.1))] hover:text-[var(--tg-theme-button-text-color,white)] transition-colors"
                       >
                         <FiEdit2 className="h-4 w-4" />
                       </Button>
