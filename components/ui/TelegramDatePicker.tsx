@@ -118,6 +118,7 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
       days.push(
         <button
           key={`day-${day}`}
+          type="button"
           onClick={() => handleDateSelect(day)}
           className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm
             ${isSelected ? 'bg-blue-500 hover:bg-blue-600' : ''}
@@ -168,6 +169,7 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
             {/* Calendar header */}
             <div className="flex items-center justify-between mb-4">
               <button 
+                type="button"
                 onClick={handlePrevMonth}
                 className="p-1 rounded-full hover:bg-gray-700"
               >
@@ -179,6 +181,7 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
               </div>
               
               <button 
+                type="button"
                 onClick={handleNextMonth}
                 className="p-1 rounded-full hover:bg-gray-700"
               >
