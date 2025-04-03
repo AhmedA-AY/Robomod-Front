@@ -186,7 +186,7 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="flex-1 overflow-hidden"
           >
-            {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id} />}
+            {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id.toString()} />}
             {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
             {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'greeting' && <GreetingSettings chatId={selectedChat.id.toString()} />}
