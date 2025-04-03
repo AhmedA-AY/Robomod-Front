@@ -123,11 +123,10 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
         >
         <div className="flex gap-2 items-end">
           <div
-            className="flex-1 rounded-lg overflow-hidden border focus-within:ring-1"
+            className="flex-1 rounded-lg overflow-hidden border focus-within:ring-1 focus-within:ring-[var(--tg-theme-button-color,#3b82f6)]"
              style={{
                backgroundColor: 'var(--tg-theme-bg-color, #111827)',
                borderColor: 'var(--tg-theme-hint-color, #4b5563)',
-               '--ring-color': 'var(--tg-theme-button-color, #3b82f6)'
              }}
           >
             <Textarea
