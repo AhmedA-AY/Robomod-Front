@@ -145,8 +145,16 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         return;
       }
 
-      const url = `https://robomod.dablietech.club/api/messages/${chatId}/${messageId}`;
-      const response = await fetch(url, {
+      // --- Updated URL Construction ---
+      const baseUrl = `https://robomod.dablietech.club/api/message`; // Use new base path
+      const url = new URL(baseUrl);
+      url.searchParams.append('chat_id', chatId); // Add chat_id as query param
+      url.searchParams.append('message_id', messageId.toString()); // Add message_id as query param
+      // --- End Updated URL Construction ---
+
+      console.log(`Fetching message content from: ${url.toString()}`); // Log the new URL
+
+      const response = await fetch(url.toString(), { // Fetch using the new URL object
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
@@ -157,7 +165,6 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         console.error(`Failed to fetch content for message ${messageId}:`, errorData?.message || response.statusText);
-        // Store error state or partial data?
         setMessageContents(prev => ({ ...prev, [messageId]: { fetched_media_type: undefined } })); // Mark as failed
         return;
       }
@@ -165,7 +172,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
       const data = await response.json();
       console.log(`Fetched content for message ${messageId}:`, data);
 
-      // Assuming API returns { message_text: '...', media_type: 'photo'/'video'/'document' } or similar
+      // Store fetched content (assuming API response structure is the same)
       setMessageContents(prev => ({
         ...prev,
         [messageId]: {
