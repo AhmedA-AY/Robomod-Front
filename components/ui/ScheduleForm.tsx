@@ -154,8 +154,9 @@ export function ScheduleForm({
         )}
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="flex-1">
+      <div className="flex items-center gap-4">
+        {/* File Upload Section - Allow to shrink and truncate text */}
+        <div className="flex-1 min-w-0"> 
           <input
             ref={fileInputRef}
             type="file"
@@ -169,25 +170,31 @@ export function ScheduleForm({
             type="button"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
+            className="w-full bg-[#374151] border-gray-600 text-white hover:bg-gray-700 flex items-center justify-start text-left overflow-hidden"
           >
-            <FiUpload className="w-4 h-4 mr-2" />
-            {mediaFile ? mediaFile.name : 'Upload Media'}
+            <FiUpload className="w-4 h-4 mr-2 flex-shrink-0" />
+            {/* Truncate filename if too long */}
+            <span className="truncate">
+              {mediaFile ? mediaFile.name : 'Upload Media'}
+            </span>
           </Button>
         </div>
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || !canSubmit}
-          className="min-w-[140px] bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600"
-        >
-          {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : editingMessage ? (
-            'Update Message'
-          ) : (
-            'Schedule Message'
-          )}
-        </Button>
+        {/* Submit Button Section - Fixed width */}
+        <div className="flex-shrink-0">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !canSubmit}
+            className="min-w-[140px] bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-600 flex items-center justify-center"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : editingMessage ? (
+              'Update Message'
+            ) : (
+              'Schedule Message'
+            )}
+          </Button>
+        </div>
       </div>
     </form>
   )
