@@ -396,12 +396,26 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   }
 
   const handleEdit = (message: ScheduledMessage) => {
-    setEditingMessage(message)
-    setNewMessage(message.message_text || '')
-    setInterval(Math.round(message.interval / 60).toString())
-    setStartDate(new Date(message.starting_at * 1000))
-    setIsEnabled(message.enabled)
-  }
+    // Determine the key to use for looking up fetched content
+    const contentKey = message.message_id && message.message_id !== 0
+      ? message.message_id
+      : message.schedule_id; // Fallback to schedule_id if message_id is invalid
+
+    // Get the fetched content from state
+    const fetchedContent = messageContents[contentKey];
+
+    // Determine the text to pre-fill in the textarea
+    // Use fetched text if available, otherwise empty string
+    const editText = fetchedContent?.fetched_message_text || '';
+
+    // Set the form state
+    setEditingMessage(message); // Mark that we are editing this message
+    setNewMessage(editText);    // Set the textarea content to fetched text
+    setMediaFile(null);         // Clear any previously selected media file in the form
+    setInterval(Math.round(message.interval / 60).toString()); // Set interval
+    setStartDate(new Date(message.starting_at * 1000));         // Set start date
+    setIsEnabled(message.enabled);                             // Set enabled status
+  };
 
   // Show loading spinner during SSR or initial mount
   if (!isMounted || isLoading) {
