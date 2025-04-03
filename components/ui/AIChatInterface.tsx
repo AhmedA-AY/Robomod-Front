@@ -1,14 +1,18 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageSquare, Loader2 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+
+interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+}
 
 interface AIChatInterfaceProps {
-  chatId?: number;
+    chatId: string;
 }
 
 export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {

@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Loader2 } from 'lucide-react'
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import * as React from "react"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { Loader2 } from 'lucide-react'
+import * as React from "react"
 
 interface FaqSettings {
   enabled: boolean;
