@@ -22,7 +22,7 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
   const [error, setError] = useState<string | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return
     
     // Add user message
@@ -33,17 +33,24 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
     // Simulate AI typing
     setIsLoading(true)
     
-    // Simulate AI response with a more natural delay
-    setTimeout(() => {
+    try {
+      // Simulate AI response with a more natural delay
+      setTimeout(() => {
+        setIsLoading(false)
+        setHistory([
+          ...newMessages,
+          { 
+            role: 'assistant' as const, 
+            content: `This is a simulated response for chat ID: ${chatId || 'unknown'}. In a real implementation, this would call an API with the chat ID.` 
+          }
+        ])
+      }, 1500)
+    } catch (e) {
+      console.error("Failed to send message:", e)
+      setError('Failed to send message. Please check your connection.')
+    } finally {
       setIsLoading(false)
-      setHistory([
-        ...newMessages,
-        { 
-          role: 'assistant' as const, 
-          content: `This is a simulated response for chat ID: ${chatId || 'unknown'}. In a real implementation, this would call an API with the chat ID.` 
-        }
-      ])
-    }, 1500)
+    }
   }
 
   useEffect(() => {
