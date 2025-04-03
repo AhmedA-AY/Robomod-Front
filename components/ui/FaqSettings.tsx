@@ -343,8 +343,8 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
 
   if (isLoading && retryCount === 0 && !fetchFailed) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-full" style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}>
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--tg-theme-hint-color,#a0aec0)]" />
       </div>
     )
   }
@@ -353,150 +353,99 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
   // but also provide a way to continue using the form with default values
   if (error && fetchFailed) {
     return (
-      <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-        <div className="p-6 border-b border-gray-700/50">
-          <h2 className="text-2xl font-semibold tracking-tight">FAQ Settings</h2>
-          <p className="text-sm text-gray-400 mt-1">Manage your automated FAQ responses</p>
-        </div>
-
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mb-6 bg-destructive/10 p-6 rounded-lg">
-            <p className="text-destructive font-medium text-lg mb-2">Error Loading Settings</p>
-            <p className="text-foreground/90 mb-4">{error}</p>
-            <p className="text-foreground/70 text-sm mb-4">
-              You can still configure your FAQ settings below. Default values have been provided.
-            </p>
-            <Button 
-              onClick={() => {
-                setRetryCount(0);
-                setFetchFailed(false);
-                fetchFaqSettings().catch(() => console.log('Manual retry failed'));
-              }}
-              className="bg-primary text-white"
-              size="sm"
-            >
-              Retry Loading Settings
-            </Button>
-          </div>
-
-          {/* Show the form with default values */}
-          <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm mb-8 shadow-xl">
-            <CardContent className="p-6">
-              {renderFaqForm()}
-            </CardContent>
-          </Card>
-
-          {renderTips()}
-        </div>
+      <div className="flex items-center justify-center h-full p-4" style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}>
+         <div
+           className="p-6 rounded-lg max-w-md text-center border"
+           style={{
+             backgroundColor: 'rgba(239, 68, 68, 0.1)', // Reddish background for error
+             borderColor: 'rgba(239, 68, 68, 0.5)', // Reddish border
+           }}
+         >
+           <p className="font-medium text-lg mb-2" style={{ color: 'var(--tg-theme-destructive-text-color, #ef4444)'}}>Error</p>
+           <p className="" style={{ color: 'var(--tg-theme-text-color, white)'}}>{error}</p>
+         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="p-6 border-b border-gray-700/50">
-        <h2 className="text-2xl font-semibold tracking-tight">FAQ Settings</h2>
-        <p className="text-sm text-gray-400 mt-1">Manage your automated FAQ responses</p>
+    <div
+      className="h-full flex flex-col"
+      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}
+    >
+      {/* Header */}
+      <div
+        className="p-6 border-b"
+        style={{ borderColor: 'var(--tg-theme-hint-color, #4b5563)' }}
+      >
+        <h2 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--tg-theme-text-color, white)' }}>FAQ Settings</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>Manage automated responses to frequently asked questions.</p>
       </div>
 
+      {/* Content Area */}
       <div className="flex-1 overflow-auto p-6">
-        {error && (
-          <div className="mb-6 bg-yellow-500/10 p-4 rounded-lg">
-            <p className="text-yellow-400 font-medium mb-1">Warning</p>
-            <p className="text-foreground/90 text-sm">{error}</p>
+        <div className="space-y-6">
+          {/* Enable Toggle */}
+          <div
+            className="flex items-center justify-between p-4 rounded-lg border"
+            style={{
+              backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+            }}
+           >
+            <div>
+              <Label className="text-lg" style={{ color: 'var(--tg-theme-text-color, white)' }}>Enable FAQ</Label>
+              <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                When enabled, the bot will automatically respond.
+              </p>
+            </div>
+            <Switch
+              checked={enabled}
+              onCheckedChange={handleToggleFaq}
+              disabled={isSubmitting}
+              // Assuming Switch component uses theme variables or accepts style prop for colors
+              // If not, may need custom styling or component modification
+              // Example using data attributes if shadcn switch:
+              className="data-[state=checked]:bg-[var(--tg-theme-button-color,#3b82f6)] data-[state=unchecked]:bg-[var(--tg-theme-secondary-bg-color,#4b5563)]"
+            />
           </div>
-        )}
 
-        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm mb-8 shadow-xl">
-          <CardContent className="p-6">
-            {renderFaqForm()}
-          </CardContent>
-        </Card>
+          {/* Message Textarea */}
+          <div className="space-y-2">
+            <Label className="text-lg" style={{ color: 'var(--tg-theme-text-color, white)' }}>FAQ Message</Label>
+            <p className="text-sm mb-2" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+              This message will be used to answer questions.
+            </p>
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Enter your FAQ message here..."
+              className="border min-h-[200px] text-[var(--tg-theme-text-color,white)] placeholder:text-[var(--tg-theme-hint-color,#a0aec0)] focus-visible:ring-offset-0 focus-visible:ring-[var(--tg-theme-button-color,#3b82f6)]"
+              style={{
+                backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+                borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
 
-        {renderTips()}
+          {/* Save Button */}
+          <Button
+            onClick={handleSaveMessage}
+            disabled={isSubmitting || !message.trim()}
+            className="w-full disabled:opacity-50"
+             style={{
+               backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+               color: 'var(--tg-theme-button-text-color, white)',
+             }}
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : null}
+            Save FAQ Message
+          </Button>
+        </div>
       </div>
     </div>
   )
-
-  // Helper function to render the FAQ form
-  function renderFaqForm() {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className="text-white text-lg">Enable FAQ</Label>
-            <p className="text-gray-400 text-sm mt-1">
-              When enabled, the bot will automatically respond to common questions
-            </p>
-          </div>
-          <Switch 
-            checked={enabled} 
-            onCheckedChange={handleToggleFaq}
-            disabled={isSubmitting}
-            className="data-[state=checked]:bg-green-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-white text-lg">FAQ Message</Label>
-          <p className="text-gray-400 text-sm mb-2">
-            This message will be used to answer questions from users
-          </p>
-          <Textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Enter your FAQ message here..."
-            className="bg-[#374151] border-gray-600 text-white min-h-[200px]"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <Button 
-          onClick={handleSaveMessage} 
-          disabled={isSubmitting || !message.trim()}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        >
-          {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          ) : null}
-          Save FAQ Message
-        </Button>
-      </div>
-    )
-  }
-
-  // Helper function to render tips
-  function renderTips() {
-    return (
-      <div className="space-y-4">
-        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-medium text-white mb-4">Tips for effective FAQ messages</h3>
-            <ul className="space-y-2 text-gray-300">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Keep your FAQ message clear and concise
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Include the most frequently asked questions
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Organize questions and answers in a logical order
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Use formatting to improve readability (bold, lists, etc.)
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Update your FAQ regularly based on new questions
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
 } 

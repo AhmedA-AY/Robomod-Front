@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Button } from "../ui/button"
-import { Textarea } from "../ui/textarea"
-import { MessageSquare } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MessageSquare, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface AIChatInterfaceProps {
@@ -12,33 +13,26 @@ interface AIChatInterfaceProps {
 
 export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
-  const [isTyping, setIsTyping] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+  const [history, setHistory] = useState<ChatMessage[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   const handleSendMessage = () => {
     if (!message.trim()) return
     
     // Add user message
-    const newMessages = [...messages, { role: 'user' as const, content: message }]
-    setMessages(newMessages)
+    const newMessages = [...history, { role: 'user' as const, content: message }]
+    setHistory(newMessages)
     setMessage('')
     
     // Simulate AI typing
-    setIsTyping(true)
+    setIsLoading(true)
     
     // Simulate AI response with a more natural delay
     setTimeout(() => {
-      setIsTyping(false)
-      setMessages([
+      setIsLoading(false)
+      setHistory([
         ...newMessages,
         { 
           role: 'assistant' as const, 
@@ -48,8 +42,17 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
     }, 1500)
   }
 
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    }
+  }, [history])
+
   return (
-    <div className="flex flex-col h-full">
+    <div
+      className="h-full flex flex-col"
+      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}
+    >
       {/* Chat header */}
       <div className="border-b border-border p-3 flex items-center justify-between bg-card/50">
         <div className="flex items-center gap-2">
@@ -60,70 +63,67 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
         </div>
       </div>
       
-      {/* Messages container */}
-      <div className="flex-1 overflow-auto px-4 py-3 space-y-3">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4">
-            <div className="p-4 bg-primary/10 rounded-full mb-4">
-              <MessageSquare className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="text-xl font-medium mb-2">Robo Assistant</h3>
-            <p className="text-muted-foreground max-w-md">
-              Ask any questions about managing your group or channel.
-            </p>
-          </div>
-        ) : (
-          <>
-            <AnimatePresence>
-              {messages.map((msg, index) => (
-                <motion.div 
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-secondary text-secondary-foreground'
-                  }`}>
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            
-            {isTyping && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex justify-start"
-              >
-                <div className="bg-secondary text-secondary-foreground rounded-2xl px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                    <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                    <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                  </div>
-                </div>
-              </motion.div>
+      {/* Message History Area */}
+      <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        {history.map((msg, index) => (
+          <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.role === 'assistant' && (
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/placeholder-user.jpg" />
+                <AvatarFallback>AI</AvatarFallback>
+              </Avatar>
             )}
-            
-            <div ref={messagesEndRef} />
-          </>
-        )}
+            <div
+              className={`max-w-[75%] rounded-lg px-3 py-2 ${
+                msg.role === 'user'
+                  ? 'bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,white)] rounded-br-none'
+                  : 'bg-[var(--tg-theme-secondary-bg-color,#374151)] text-[var(--tg-theme-text-color,white)] rounded-bl-none'
+              }`}
+            >
+              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+            </div>
+             {msg.role === 'user' && (
+               <Avatar className="h-8 w-8">
+                 <AvatarImage src="/placeholder-user.jpg" />
+                 <AvatarFallback>U</AvatarFallback>
+               </Avatar>
+             )}
+          </div>
+        ))}
+        {isLoading && history.length === 0 && (
+             <div className="flex justify-center items-center h-full">
+                 <Loader2 className="w-6 h-6 animate-spin text-[var(--tg-theme-hint-color,#a0aec0)]" />
+             </div>
+         )}
+         {error && (
+            <div className="text-center p-4">
+                 <p className="text-sm text-red-500">{error}</p>
+            </div>
+         )}
       </div>
       
-      {/* Input area */}
-      <div className="border-t border-border p-3 bg-background">
+      {/* Input Area */}
+      <div
+        className="p-3 border-t"
+        style={{
+          backgroundColor: 'var(--tg-theme-secondary-bg-color, #1f2937)',
+          borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+        }}
+        >
         <div className="flex gap-2 items-end">
-          <div className="flex-1 bg-background rounded-lg overflow-hidden border border-input focus-within:ring-1 focus-within:ring-primary">
+          <div
+            className="flex-1 rounded-lg overflow-hidden border focus-within:ring-1"
+             style={{
+               backgroundColor: 'var(--tg-theme-bg-color, #111827)',
+               borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+               '--ring-color': 'var(--tg-theme-button-color, #3b82f6)'
+             }}
+          >
             <Textarea
               value={message}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
               placeholder="Type a message..."
-              className="min-h-[45px] max-h-[120px] resize-none border-0 focus-visible:ring-0 py-3 px-4"
+              className="min-h-[45px] max-h-[120px] resize-none border-0 focus-visible:ring-0 py-3 px-4 bg-transparent text-[var(--tg-theme-text-color,white)] placeholder:text-[var(--tg-theme-hint-color,#a0aec0)]"
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
@@ -132,12 +132,17 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
               }}
             />
           </div>
-          <Button 
-            onClick={handleSendMessage} 
-            size="icon" 
+          <Button
+            onClick={handleSendMessage}
+            size="icon"
             className="rounded-full h-10 w-10 shrink-0"
+            disabled={isLoading || !message.trim()}
+             style={{
+               backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+               color: 'var(--tg-theme-button-text-color, white)',
+             }}
           >
-            <MessageSquare className="h-5 w-5" />
+             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageSquare className="h-5 w-5" />}
           </Button>
         </div>
       </div>
