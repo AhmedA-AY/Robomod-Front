@@ -148,6 +148,7 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
     <div className="relative w-full" ref={containerRef}>
       <Label className="text-gray-300">{label}</Label>
       <Button
+        type="button"
         variant="outline"
         className="w-full justify-start text-left font-normal bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
         onClick={() => setIsOpen(!isOpen)}
