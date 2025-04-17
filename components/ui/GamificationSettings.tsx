@@ -27,9 +27,49 @@ interface LevelSettings {
   base_points_per_level: number;
 }
 
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  requirements: {
+    points?: number;
+    level?: number;
+    actions?: Record<string, number>;
+  };
+}
+
+interface Challenge {
+  id: string;
+  name: string;
+  description: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  reward_points: number;
+  requirements: {
+    points?: number;
+    level?: number;
+    actions?: Record<string, number>;
+  };
+  start_date: string;
+  end_date: string;
+}
+
+interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  type: 'role' | 'custom';
+  data: {
+    role_name?: string;
+    custom_reward?: string;
+  };
+  stock?: number;
+}
+
 interface BadgeSettings {
   badges_enabled: boolean;
-  badge_list: any[];
+  badge_list: Badge[];
 }
 
 interface LeaderboardSettings {
@@ -39,12 +79,12 @@ interface LeaderboardSettings {
 
 interface ChallengeSettings {
   challenges_enabled: boolean;
-  challenge_list: any[];
+  challenge_list: Challenge[];
 }
 
 interface RewardSettings {
   rewards_enabled: boolean;
-  reward_list: any[];
+  reward_list: Reward[];
 }
 
 interface GamificationSettings {
