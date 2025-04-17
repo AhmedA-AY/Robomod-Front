@@ -20,6 +20,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
   const [retryCount, setRetryCount] = useState(0)
   const [fetchFailed, setFetchFailed] = useState(false)
   const [settings, setSettings] = useState<GamificationSettings>({
+    enabled: true,
     point_allocations: {
       new_message: 3,
       reply_message: 5,
@@ -210,6 +211,55 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
     }))
   }
 
+  const handleToggleGamification = async (enabled: boolean) => {
+    try {
+      setIsSubmitting(true)
+      setError(null)
+      
+      const tg = window?.Telegram?.WebApp
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized')
+      }
+
+      const params = new URLSearchParams()
+      params.append('chat_id', chatId)
+      
+      const endpoint = '/api/gamification/settings'
+      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
+
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...settings, enabled })
+      }))
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorMessage = 'Failed to update gamification settings'
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
+        } catch {
+          errorMessage = errorText || `${response.status} ${response.statusText}`
+        }
+        
+        throw new Error(errorMessage)
+      }
+      
+      setSettings(prev => ({ ...prev, enabled }))
+      console.log('Gamification settings updated successfully')
+    } catch (error) {
+      console.error('Error updating gamification settings:', error)
+      setError(error instanceof Error ? error.message : 'Failed to update gamification settings')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   if (isLoading && retryCount === 0 && !fetchFailed) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -304,6 +354,29 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
         >
           <CardContent className="p-6">
             <div className="space-y-6">
+              {/* Enable/Disable Gamification */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label 
+                    className="text-lg"
+                    style={{ color: 'var(--tg-theme-text-color, white)' }}
+                  >
+                    Enable Gamification
+                  </Label>
+                  <p 
+                    className="text-sm mt-1"
+                    style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+                  >
+                    Toggle the gamification system for your community
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.enabled}
+                  onCheckedChange={handleToggleGamification}
+                  disabled={isSubmitting}
+                />
+              </div>
+
               {/* Point Allocations */}
               <div>
                 <h3 
@@ -386,7 +459,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
               </div>
 
               {/* Feature Toggles */}
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <h3 
                   className="text-lg font-semibold"
                   style={{ color: 'var(--tg-theme-text-color, white)' }}
@@ -394,7 +467,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                   Feature Toggles
                 </h3>
                 
-                {/* Badges Section - Commented out
+                Badges Section - Commented out
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -409,9 +482,9 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     />
                   </div>
                 </div>
-                */}
+               
 
-                {/* Challenges Section - Commented out
+                Challenges Section - Commented out
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -426,9 +499,9 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     />
                   </div>
                 </div>
-                */}
+               
 
-                {/* Rewards Section - Commented out
+                Rewards Section - Commented out
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -443,8 +516,8 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     />
                   </div>
                 </div>
-                */}
-              </div>
+               
+              </div> */}
 
               {/* Save Button */}
               <Button
