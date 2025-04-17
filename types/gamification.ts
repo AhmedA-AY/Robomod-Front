@@ -37,7 +37,6 @@ export interface RewardSettings {
 }
 
 export interface GamificationSettings {
-  enabled: boolean;
   point_allocations: PointAllocations;
   level_settings: LevelSettings;
   badge_settings: BadgeSettings;

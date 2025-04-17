@@ -203,43 +203,58 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
+      // Use URLSearchParams to properly format query parameters
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
+      params.append('enabled', newEnabledState.toString())
       
-      const endpoint = '/api/goodbye'
+      const endpoint = '/api/toggle_goodbye'
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
+      console.log('Toggling goodbye with URL:', urlString)
+      console.log('Request details:', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          enabled: newEnabledState,
-          message: message
+      })
+
+      // Use the safe API call function with endpoint tracking
+      const response = await safeApiCall(endpoint, () => {
+        console.log('Making API call to:', urlString)
+        return fetch(urlString, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tg.initData}`,
+            'Content-Type': 'application/json',
+          },
         })
-      }))
+      })
       
       if (!response.ok) {
         const errorText = await response.text()
-        let errorMessage = 'Failed to update goodbye settings'
+        console.error('Error toggling goodbye:', errorText)
+        let errorMessage = 'Failed to toggle goodbye'
         
         try {
           const errorData = JSON.parse(errorText)
           errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
         } catch {
+          // If JSON parsing fails, use the error text
           errorMessage = errorText || `${response.status} ${response.statusText}`
         }
         
         throw new Error(errorMessage)
       }
 
+      // Update local state after successful API call
       setEnabled(newEnabledState)
-      console.log('Goodbye settings updated successfully')
+      
+      // Show success notification or feedback to the user
+      console.log('Goodbye toggled successfully')
     } catch (error) {
-      console.error('Error updating goodbye settings:', error)
-      setError(error instanceof Error ? error.message : 'Failed to update goodbye settings')
+      console.error('Error toggling goodbye:', error)
+      setError(error instanceof Error ? error.message : 'Failed to toggle goodbye')
     } finally {
       setIsSubmitting(false)
     }
@@ -255,43 +270,49 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
+      // Validate message
       if (!message.trim()) {
         throw new Error('Goodbye message cannot be empty')
       }
 
+      // Use URLSearchParams to properly format query parameters
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
+      params.append('message', message.trim())
       
-      const endpoint = '/api/goodbye'
+      const endpoint = '/api/set_goodbye_message'
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
+      console.log('Saving goodbye message with URL:', urlString)
 
+      // Use the safe API call function with endpoint tracking
       const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          enabled: enabled,
-          message: message.trim()
-        })
       }))
       
       if (!response.ok) {
         const errorText = await response.text()
+        console.error('Error saving goodbye message:', errorText)
         let errorMessage = 'Failed to save goodbye message'
         
         try {
           const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
+          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
         } catch {
+          // If JSON parsing fails, use the error text
           errorMessage = errorText || `${response.status} ${response.statusText}`
         }
         
         throw new Error(errorMessage)
       }
       
+      // Update the local state
       setMessage(message.trim())
+      
+      // Show success notification or feedback to the user
       console.log('Goodbye message saved successfully')
     } catch (error) {
       console.error('Error saving goodbye message:', error)
@@ -422,16 +443,8 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label 
-              className="text-lg"
-              style={{ color: 'var(--tg-theme-text-color, white)' }}
-            >
-              Enable Goodbye Message
-            </Label>
-            <p 
-              className="text-sm mt-1"
-              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-            >
+            <Label className="text-white text-lg">Enable Goodbye Message</Label>
+            <p className="text-gray-400 text-sm mt-1">
               When enabled, the bot will automatically post when members leave
             </p>
           </div>
@@ -444,28 +457,15 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         </div>
 
         <div className="space-y-2">
-          <Label 
-            className="text-lg"
-            style={{ color: 'var(--tg-theme-text-color, white)' }}
-          >
-            Goodbye Message
-          </Label>
-          <p 
-            className="text-sm mb-2"
-            style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-          >
+          <Label className="text-white text-lg">Goodbye Message</Label>
+          <p className="text-gray-400 text-sm mb-2">
             This message will be sent when members leave the group
           </p>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Enter your goodbye message here..."
-            style={{
-              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
-              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
-              color: 'var(--tg-theme-text-color, white)'
-            }}
-            className="min-h-[200px]"
+            className="bg-[#374151] border-gray-600 text-white min-h-[200px]"
             disabled={isSubmitting}
           />
         </div>
@@ -473,11 +473,7 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         <Button 
           onClick={handleSaveMessage} 
           disabled={isSubmitting || !message.trim()}
-          style={{
-            backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
-            color: 'var(--tg-theme-button-text-color, white)'
-          }}
-          className="w-full"
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -494,30 +490,29 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
       <div className="space-y-4">
         <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
           <CardContent className="p-6">
-            <div 
-              className="mt-6 p-4 rounded-lg"
-              style={{
-                backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
-                borderColor: 'var(--tg-theme-hint-color, #4b5563)'
-              }}
-            >
-              <h3 
-                className="text-lg font-medium mb-3"
-                style={{ color: 'var(--tg-theme-text-color, white)' }}
-              >
-                Tips for effective goodbye messages
-              </h3>
-              <ul 
-                className="space-y-2 list-disc pl-5"
-                style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-              >
-                <li>Keep the message respectful and positive</li>
-                <li>Avoid being overly emotional or negative</li>
-                <li>Use appropriate tone based on your community style</li>
-                <li>Use <code className="px-1 py-0.5 rounded bg-[var(--tg-theme-bg-color,#1f2937)] text-[var(--tg-theme-text-color,white)]">{'{username}'}</code> to mention the departed member</li>
-                <li>Consider mentioning how to rejoin if they want to come back</li>
-              </ul>
-            </div>
+            <h3 className="text-xl font-medium text-white mb-4">Tips for effective goodbye messages</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400 font-bold">•</span>
+                Keep the message respectful and positive
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400 font-bold">•</span>
+                Avoid being overly emotional or negative
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400 font-bold">•</span>
+                Use appropriate tone based on your community style
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400 font-bold">•</span>
+                Use <code>{'{username}'}</code> to mention the departed member
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400 font-bold">•</span>
+                Consider mentioning how to rejoin if they want to come back
+              </li>
+            </ul>
           </CardContent>
         </Card>
       </div>

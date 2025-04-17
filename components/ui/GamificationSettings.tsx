@@ -1,108 +1,25 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from 'lucide-react'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import * as React from "react"
+import type { GamificationSettings, PointAllocations, LevelSettings } from '@/types/gamification'
 
-interface PointAllocations {
-  new_message: number;
-  reply_message: number;
-  react_message: number;
-  unreact_message: number;
-  helpful_answer: number;
-  share_resource: number;
-  create_poll: number;
-  welcome_member: number;
-  report_issue: number;
-  bad_behavior: number;
-}
-
-interface LevelSettings {
-  level_multiplier: number;
-  base_points_per_level: number;
-}
-
-interface Badge {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  requirements: {
-    points?: number;
-    level?: number;
-    actions?: Record<string, number>;
-  };
-}
-
-interface Challenge {
-  id: string;
-  name: string;
-  description: string;
-  type: 'daily' | 'weekly' | 'monthly';
-  reward_points: number;
-  requirements: {
-    points?: number;
-    level?: number;
-    actions?: Record<string, number>;
-  };
-  start_date: string;
-  end_date: string;
-}
-
-interface Reward {
-  id: string;
-  name: string;
-  description: string;
-  cost: number;
-  type: 'role' | 'custom';
-  data: {
-    role_name?: string;
-    custom_reward?: string;
-  };
-  stock?: number;
-}
-
-interface BadgeSettings {
-  badges_enabled: boolean;
-  badge_list: Badge[];
-}
-
-interface LeaderboardSettings {
-  leaderboard_types: string[];
-  reset_times: Record<string, string>;
-}
-
-interface ChallengeSettings {
-  challenges_enabled: boolean;
-  challenge_list: Challenge[];
-}
-
-interface RewardSettings {
-  rewards_enabled: boolean;
-  reward_list: Reward[];
-}
-
-interface GamificationSettings {
-  enabled: boolean;
-  point_allocations: PointAllocations;
-  level_settings: LevelSettings;
-  badge_settings: BadgeSettings;
-  leaderboard_settings: LeaderboardSettings;
-  challenge_settings: ChallengeSettings;
-  reward_settings: RewardSettings;
+interface EndpointTimestamps {
+  [key: string]: number;
 }
 
 export default function GamificationSettings({ chatId }: { chatId: string }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+  const [fetchFailed, setFetchFailed] = useState(false)
   const [settings, setSettings] = useState<GamificationSettings>({
-    enabled: true,
     point_allocations: {
       new_message: 3,
       reply_message: 5,
@@ -137,10 +54,31 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
     }
   })
 
-  const fetchSettings = useCallback(async () => {
+  const lastApiCallsRef = useRef<EndpointTimestamps>({})
+
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<Response>): Promise<Response> => {
+    const now = Date.now()
+    const lastCallTime = lastApiCallsRef.current[endpoint] || 0
+    const timeSinceLastCall = now - lastCallTime
+    
+    if (timeSinceLastCall < 1100) {
+      const waitTime = 1100 - timeSinceLastCall
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+    }
+    
+    lastApiCallsRef.current[endpoint] = Date.now()
+    
+    try {
+      return await apiCall()
+    } catch (error) {
+      console.error(`API call to ${endpoint} failed:`, error)
+      throw error
+    }
+  }, [])
+
+  const fetchGamificationSettings = useCallback(async () => {
     try {
       setIsLoading(true)
-      setError(null)
       
       const tg = window?.Telegram?.WebApp
       if (!tg || !tg.initData) {
@@ -150,30 +88,61 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
       
-      const response = await fetch(`https://robomod.dablietech.club/gamification/settings?${params.toString()}`, {
+      const endpoint = '/api/gamification/settings'
+      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
+
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         }
-      })
+      }))
       
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error(errorText || 'Failed to fetch gamification settings')
+        let errorMessage = 'Failed to fetch gamification settings'
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
+        } catch {
+          errorMessage = errorText || `${response.status} ${response.statusText}`
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
       setSettings(data)
+      setRetryCount(0)
+      setFetchFailed(false)
     } catch (error) {
       console.error('Error fetching gamification settings:', error)
-      setError(error instanceof Error ? error.message : 'Failed to fetch settings')
+      setError(error instanceof Error ? error.message : 'Failed to fetch gamification settings')
+      setFetchFailed(true)
     } finally {
       setIsLoading(false)
     }
-  }, [chatId])
+  }, [chatId, safeApiCall])
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    if (error && retryCount < 3 && !fetchFailed) {
+      const backoffTime = Math.pow(2, retryCount + 1) * 1000
+      const timer = setTimeout(() => {
+        setRetryCount(prev => prev + 1)
+        fetchGamificationSettings().catch(() => {})
+      }, backoffTime)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [error, retryCount, fetchGamificationSettings, fetchFailed])
+
+  useEffect(() => {
+    fetchGamificationSettings().catch(() => {})
+  }, [fetchGamificationSettings])
+
+  const handleSaveSettings = async () => {
     try {
       setIsSubmitting(true)
       setError(null)
@@ -186,38 +155,95 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
       
-      const response = await fetch(`https://robomod.dablietech.club/gamification/settings?${params.toString()}`, {
+      const endpoint = '/api/gamification/settings'
+      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
+
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(settings)
-      })
+      }))
       
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error(errorText || 'Failed to update gamification settings')
+        let errorMessage = 'Failed to save gamification settings'
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
+        } catch {
+          errorMessage = errorText || `${response.status} ${response.statusText}`
+        }
+        
+        throw new Error(errorMessage)
       }
-
-      // Refresh settings after successful update
-      fetchSettings()
+      
+      console.log('Gamification settings saved successfully')
     } catch (error) {
-      console.error('Error updating gamification settings:', error)
-      setError(error instanceof Error ? error.message : 'Failed to update settings')
+      console.error('Error saving gamification settings:', error)
+      setError(error instanceof Error ? error.message : 'Failed to save gamification settings')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  useEffect(() => {
-    fetchSettings()
-  }, [fetchSettings])
+  const handlePointChange = (key: keyof PointAllocations, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      point_allocations: {
+        ...prev.point_allocations,
+        [key]: parseInt(value) || 0
+      }
+    }))
+  }
 
-  if (isLoading) {
+  const handleLevelSettingChange = (key: keyof LevelSettings, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      level_settings: {
+        ...prev.level_settings,
+        [key]: parseFloat(value) || 0
+      }
+    }))
+  }
+
+  if (isLoading && retryCount === 0 && !fetchFailed) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--tg-theme-hint-color,#a0aec0)]" />
+      </div>
+    )
+  }
+
+  if (error && fetchFailed) {
+    return (
+      <div className="flex items-center justify-center h-full p-4">
+        <div
+          className="p-6 rounded-lg max-w-md text-center border"
+          style={{
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+            borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+          }}
+        >
+          <p className="font-medium text-lg mb-2" style={{ color: 'var(--tg-theme-text-color, white)'}}>Error</p>
+          <p className="mb-4" style={{ color: 'var(--tg-theme-text-color, white)'}}>{error}</p>
+          <Button
+            onClick={() => {
+              setRetryCount(0)
+              setFetchFailed(false)
+              fetchGamificationSettings().catch(() => {})
+            }}
+            style={{
+              backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+              color: 'var(--tg-theme-button-text-color, white)'
+            }}
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
@@ -241,7 +267,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
           className="text-sm mt-1"
           style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
         >
-          Configure points, levels, and rewards
+          Configure points, levels, badges, and rewards for your community
         </p>
       </div>
 
@@ -258,7 +284,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
               className="font-medium mb-1"
               style={{ color: 'var(--tg-theme-text-color, white)' }}
             >
-              Error
+              Warning
             </p>
             <p 
               className="text-sm"
@@ -278,55 +304,27 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
         >
           <CardContent className="p-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label 
-                    className="text-lg"
-                    style={{ color: 'var(--tg-theme-text-color, white)' }}
-                  >
-                    Enable Gamification
-                  </Label>
-                  <p 
-                    className="text-sm mt-1"
-                    style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-                  >
-                    Turn on/off all gamification features
-                  </p>
-                </div>
-                <Switch 
-                  checked={settings.enabled} 
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, enabled: checked }))}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="space-y-4">
+              {/* Point Allocations */}
+              <div>
                 <h3 
-                  className="text-lg font-medium"
+                  className="text-lg font-medium mb-4"
                   style={{ color: 'var(--tg-theme-text-color, white)' }}
                 >
                   Point Allocations
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {Object.entries(settings.point_allocations).map(([key, value]) => (
                     <div key={key} className="space-y-2">
                       <Label 
-                        className="capitalize"
+                        className="text-sm"
                         style={{ color: 'var(--tg-theme-text-color, white)' }}
                       >
-                        {key.replace(/_/g, ' ')}
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </Label>
                       <Input
                         type="number"
                         value={value}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          point_allocations: {
-                            ...prev.point_allocations,
-                            [key]: parseInt(e.target.value) || 0
-                          }
-                        }))}
-                        disabled={isSubmitting}
+                        onChange={(e) => handlePointChange(key as keyof PointAllocations, e.target.value)}
                         style={{
                           backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
                           borderColor: 'var(--tg-theme-hint-color, #4b5563)',
@@ -338,16 +336,18 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              {/* Level Settings */}
+              <div>
                 <h3 
-                  className="text-lg font-medium"
+                  className="text-lg font-medium mb-4"
                   style={{ color: 'var(--tg-theme-text-color, white)' }}
                 >
                   Level Settings
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label 
+                      className="text-sm"
                       style={{ color: 'var(--tg-theme-text-color, white)' }}
                     >
                       Level Multiplier
@@ -356,14 +356,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                       type="number"
                       step="0.1"
                       value={settings.level_settings.level_multiplier}
-                      onChange={(e) => setSettings(prev => ({
-                        ...prev,
-                        level_settings: {
-                          ...prev.level_settings,
-                          level_multiplier: parseFloat(e.target.value) || 1.5
-                        }
-                      }))}
-                      disabled={isSubmitting}
+                      onChange={(e) => handleLevelSettingChange('level_multiplier', e.target.value)}
                       style={{
                         backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
                         borderColor: 'var(--tg-theme-hint-color, #4b5563)',
@@ -373,6 +366,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                   </div>
                   <div className="space-y-2">
                     <Label 
+                      className="text-sm"
                       style={{ color: 'var(--tg-theme-text-color, white)' }}
                     >
                       Base Points per Level
@@ -380,14 +374,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     <Input
                       type="number"
                       value={settings.level_settings.base_points_per_level}
-                      onChange={(e) => setSettings(prev => ({
-                        ...prev,
-                        level_settings: {
-                          ...prev.level_settings,
-                          base_points_per_level: parseInt(e.target.value) || 100
-                        }
-                      }))}
-                      disabled={isSubmitting}
+                      onChange={(e) => handleLevelSettingChange('base_points_per_level', e.target.value)}
                       style={{
                         backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
                         borderColor: 'var(--tg-theme-hint-color, #4b5563)',
@@ -398,14 +385,76 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                 </div>
               </div>
 
-              <Button 
-                onClick={handleSubmit}
+              {/* Feature Toggles */}
+              <div className="space-y-4">
+                <h3 
+                  className="text-lg font-semibold"
+                  style={{ color: 'var(--tg-theme-text-color, white)' }}
+                >
+                  Feature Toggles
+                </h3>
+                
+                {/* Badges Section - Commented out
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Badges</p>
+                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                        Enable badge system for achievements
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.badges.enabled}
+                      onCheckedChange={(checked) => handleSettingsChange('badges', { ...settings.badges, enabled: checked })}
+                    />
+                  </div>
+                </div>
+                */}
+
+                {/* Challenges Section - Commented out
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Challenges</p>
+                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                        Enable daily and weekly challenges
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.challenges.enabled}
+                      onCheckedChange={(checked) => handleSettingsChange('challenges', { ...settings.challenges, enabled: checked })}
+                    />
+                  </div>
+                </div>
+                */}
+
+                {/* Rewards Section - Commented out
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Rewards</p>
+                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                        Enable reward system for points
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.rewards.enabled}
+                      onCheckedChange={(checked) => handleSettingsChange('rewards', { ...settings.rewards, enabled: checked })}
+                    />
+                  </div>
+                </div>
+                */}
+              </div>
+
+              {/* Save Button */}
+              <Button
+                onClick={handleSaveSettings}
                 disabled={isSubmitting}
+                className="w-full"
                 style={{
                   backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
                   color: 'var(--tg-theme-button-text-color, white)'
                 }}
-                className="w-full"
               >
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
