@@ -15,59 +15,12 @@ interface AIChatInterfaceProps {
     chatId: string;
 }
 
-interface ApiChatMessage {
-    role: 'user' | 'assistant';
-    content: string;
-}
-
-interface ChatHistoryResponse {
-    history: ApiChatMessage[];
-}
-
 export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const [history, setHistory] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-
-  const fetchHistory = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const tg = window?.Telegram?.WebApp;
-      if (!tg || !tg.initData) {
-        throw new Error('Telegram Web App is not initialized');
-      }
-
-      const response = await fetch(`https://robomod.dablietech.club/api/ai/history?chat_id=${chatId}`, {
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to fetch chat history');
-      }
-
-      const data = await response.json() as ChatHistoryResponse;
-      if (Array.isArray(data.history)) {
-        setHistory(data.history.map((msg: ApiChatMessage) => ({
-          role: msg.role,
-          content: msg.content
-        })));
-      } else {
-        setHistory([]);
-      }
-    } catch (e) {
-      console.error("Failed to fetch history:", e);
-      setError(e instanceof Error ? e.message : 'Failed to load chat history. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -104,7 +57,7 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
       const data = await response.json();
       const assistantMessage: ChatMessage = { 
         role: 'assistant', 
-        content: data.response || "I'm sorry, I couldn't process your request at this time."
+        content: data.answer || "I'm sorry, I couldn't process your request at this time."
       };
       setHistory(prev => [...prev, assistantMessage]);
     } catch (e) {
@@ -114,10 +67,6 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchHistory();
-  }, [chatId]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
