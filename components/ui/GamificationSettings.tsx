@@ -459,7 +459,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
               </div>
 
               {/* Feature Toggles */}
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <h3 
                   className="text-lg font-semibold"
                   style={{ color: 'var(--tg-theme-text-color, white)' }}
@@ -467,7 +467,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                   Feature Toggles
                 </h3>
                 
-                {/* Badges Section - Commented out
+                Badges Section - Commented out
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -482,9 +482,9 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     />
                   </div>
                 </div>
-                */}
+               
 
-                {/* Challenges Section - Commented out
+                Challenges Section - Commented out
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -499,9 +499,9 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     />
                   </div>
                 </div>
-                */}
+               
 
-                {/* Rewards Section - Commented out
+                Rewards Section - Commented out
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -516,8 +516,8 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                     />
                   </div>
                 </div>
-                */}
-              </div>
+               
+              </div> */}
 
               {/* Save Button */}
               <Button
