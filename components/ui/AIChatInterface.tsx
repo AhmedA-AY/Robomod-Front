@@ -15,6 +15,15 @@ interface AIChatInterfaceProps {
     chatId: string;
 }
 
+interface ApiChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
+interface ChatHistoryResponse {
+    history: ApiChatMessage[];
+}
+
 export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const [history, setHistory] = useState<ChatMessage[]>([])
@@ -43,9 +52,9 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
         throw new Error(errorData?.message || 'Failed to fetch chat history');
       }
 
-      const data = await response.json();
+      const data = await response.json() as ChatHistoryResponse;
       if (Array.isArray(data.history)) {
-        setHistory(data.history.map((msg: any) => ({
+        setHistory(data.history.map((msg: ApiChatMessage) => ({
           role: msg.role,
           content: msg.content
         })));
