@@ -3,10 +3,11 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
-import { MessageCircle, MessageSquare, Menu, HelpCircle } from 'lucide-react'
+import { MessageCircle, MessageSquare, Menu, HelpCircle, Trophy } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import GamificationSettings from '@/components/ui/GamificationSettings'
 
 interface Chat {
   id: number;
@@ -79,6 +80,7 @@ export default function Home() {
     { id: 'faq', label: 'FAQ Settings', icon: <HelpCircle className="w-5 h-5" />, color: 'text-amber-500' },
     { id: 'greeting', label: 'Greeting', icon: <MessageCircle className="w-5 h-5" />, color: 'text-purple-500' },
     { id: 'goodbye', label: 'Goodbye', icon: <MessageSquare className="w-5 h-5" />, color: 'text-pink-500' },
+    { id: 'gamification', label: 'Gamification', icon: <Trophy className="w-5 h-5" />, color: 'text-yellow-500' },
   ]
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
@@ -191,8 +193,9 @@ export default function Home() {
             {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'greeting' && <GreetingSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'goodbye' && <GoodbyeSettings chatId={selectedChat.id.toString()} />}
+            {activeTab === 'gamification' && <GamificationSettings chatId={selectedChat.id.toString()} />}
             {activeTab !== 'ai' && activeTab !== 'scheduled' && activeTab !== 'faq' && 
-             activeTab !== 'greeting' && activeTab !== 'goodbye' && (
+             activeTab !== 'greeting' && activeTab !== 'goodbye' && activeTab !== 'gamification' && (
               <div className="h-full flex items-center justify-center p-4">
                 <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl border border-border">
                   <div className="flex flex-col items-center justify-center text-center gap-4">
