@@ -374,21 +374,59 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="p-6 border-b border-gray-700/50">
-        <h2 className="text-2xl font-semibold tracking-tight">Goodbye Settings</h2>
-        <p className="text-sm text-gray-400 mt-1">Manage your automated goodbye messages</p>
+    <div 
+      className="h-full flex flex-col"
+      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}
+    >
+      <div 
+        className="p-6 border-b"
+        style={{ borderColor: 'var(--tg-theme-hint-color, #4b5563)' }}
+      >
+        <h2 
+          className="text-2xl font-semibold tracking-tight"
+          style={{ color: 'var(--tg-theme-text-color, white)' }}
+        >
+          Goodbye Settings
+        </h2>
+        <p 
+          className="text-sm mt-1"
+          style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+        >
+          Manage your automated goodbye messages
+        </p>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
         {error && (
-          <div className="mb-6 bg-yellow-500/10 p-4 rounded-lg">
-            <p className="text-yellow-400 font-medium mb-1">Warning</p>
-            <p className="text-foreground/90 text-sm">{error}</p>
+          <div 
+            className="mb-6 p-4 rounded-lg"
+            style={{
+              backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+            }}
+          >
+            <p 
+              className="font-medium mb-1"
+              style={{ color: 'var(--tg-theme-text-color, white)' }}
+            >
+              Warning
+            </p>
+            <p 
+              className="text-sm"
+              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+            >
+              {error}
+            </p>
           </div>
         )}
 
-        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm mb-8 shadow-xl">
+        <Card 
+          className="mb-8 shadow-xl backdrop-blur-sm"
+          style={{
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+            borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+          }}
+        >
           <CardContent className="p-6">
             {renderGoodbyeForm()}
           </CardContent>

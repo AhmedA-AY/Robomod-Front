@@ -440,7 +440,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
   return (
     <div 
       className="h-full flex flex-col text-white"
-      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1a202c)' }} // Use Telegram bg color with fallback
+      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1a202c)' }}
     >
       <div className="p-6 border-b border-[var(--tg-theme-hint-color,rgba(255,255,255,0.1))] backdrop-blur-sm">
         <h2 className="text-2xl font-semibold tracking-tight text-[var(--tg-theme-text-color,white)]">Scheduled Messages</h2>
@@ -451,7 +451,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         <Card 
           className="mb-8 shadow-xl border-none"
           style={{
-            backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)', // Use secondary bg for card
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)',
             borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
           }}
         >
@@ -495,7 +495,7 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                 key={message.schedule_id} 
                 className="backdrop-blur-sm hover:brightness-110 transition-all border-none shadow-md"
                 style={{
-                  backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)', // Use secondary bg for card
+                  backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)',
                   borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
                 }}
               >

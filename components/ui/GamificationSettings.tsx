@@ -386,84 +386,64 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
               </div>
 
               {/* Feature Toggles */}
-              <div>
+              <div className="space-y-4">
                 <h3 
-                  className="text-lg font-medium mb-4"
+                  className="text-lg font-semibold"
                   style={{ color: 'var(--tg-theme-text-color, white)' }}
                 >
                   Feature Toggles
                 </h3>
-                <div className="space-y-4">
+                
+                {/* Badges Section - Commented out
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label 
-                        className="text-sm"
-                        style={{ color: 'var(--tg-theme-text-color, white)' }}
-                      >
-                        Badges
-                      </Label>
-                      <p 
-                        className="text-xs"
-                        style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-                      >
-                        Enable achievement badges for members
+                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Badges</p>
+                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                        Enable badge system for achievements
                       </p>
                     </div>
                     <Switch
-                      checked={settings.badge_settings.badges_enabled}
-                      onCheckedChange={(checked) => setSettings(prev => ({
-                        ...prev,
-                        badge_settings: { ...prev.badge_settings, badges_enabled: checked }
-                      }))}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label 
-                        className="text-sm"
-                        style={{ color: 'var(--tg-theme-text-color, white)' }}
-                      >
-                        Challenges
-                      </Label>
-                      <p 
-                        className="text-xs"
-                        style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-                      >
-                        Enable community challenges
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.challenge_settings.challenges_enabled}
-                      onCheckedChange={(checked) => setSettings(prev => ({
-                        ...prev,
-                        challenge_settings: { ...prev.challenge_settings, challenges_enabled: checked }
-                      }))}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label 
-                        className="text-sm"
-                        style={{ color: 'var(--tg-theme-text-color, white)' }}
-                      >
-                        Rewards
-                      </Label>
-                      <p 
-                        className="text-xs"
-                        style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
-                      >
-                        Enable reward system
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.reward_settings.rewards_enabled}
-                      onCheckedChange={(checked) => setSettings(prev => ({
-                        ...prev,
-                        reward_settings: { ...prev.reward_settings, rewards_enabled: checked }
-                      }))}
+                      checked={settings.badges.enabled}
+                      onCheckedChange={(checked) => handleSettingsChange('badges', { ...settings.badges, enabled: checked })}
                     />
                   </div>
                 </div>
+                */}
+
+                {/* Challenges Section - Commented out
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Challenges</p>
+                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                        Enable daily and weekly challenges
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.challenges.enabled}
+                      onCheckedChange={(checked) => handleSettingsChange('challenges', { ...settings.challenges, enabled: checked })}
+                    />
+                  </div>
+                </div>
+                */}
+
+                {/* Rewards Section - Commented out
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Rewards</p>
+                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                        Enable reward system for points
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.rewards.enabled}
+                      onCheckedChange={(checked) => handleSettingsChange('rewards', { ...settings.rewards, enabled: checked })}
+                    />
+                  </div>
+                </div>
+                */}
               </div>
 
               {/* Save Button */}
