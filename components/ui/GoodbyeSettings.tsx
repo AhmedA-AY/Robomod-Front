@@ -203,58 +203,43 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      // Use URLSearchParams to properly format query parameters
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
-      params.append('enabled', newEnabledState.toString())
       
-      const endpoint = '/api/toggle_goodbye'
+      const endpoint = '/api/goodbye'
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Toggling goodbye with URL:', urlString)
-      console.log('Request details:', {
+
+      const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-      })
-
-      // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => {
-        console.log('Making API call to:', urlString)
-        return fetch(urlString, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-            'Content-Type': 'application/json',
-          },
+        body: JSON.stringify({
+          enabled: newEnabledState,
+          message: message
         })
-      })
+      }))
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('Error toggling goodbye:', errorText)
-        let errorMessage = 'Failed to toggle goodbye'
+        let errorMessage = 'Failed to update goodbye settings'
         
         try {
           const errorData = JSON.parse(errorText)
           errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
         } catch {
-          // If JSON parsing fails, use the error text
           errorMessage = errorText || `${response.status} ${response.statusText}`
         }
         
         throw new Error(errorMessage)
       }
 
-      // Update local state after successful API call
       setEnabled(newEnabledState)
-      
-      // Show success notification or feedback to the user
-      console.log('Goodbye toggled successfully')
+      console.log('Goodbye settings updated successfully')
     } catch (error) {
-      console.error('Error toggling goodbye:', error)
-      setError(error instanceof Error ? error.message : 'Failed to toggle goodbye')
+      console.error('Error updating goodbye settings:', error)
+      setError(error instanceof Error ? error.message : 'Failed to update goodbye settings')
     } finally {
       setIsSubmitting(false)
     }
@@ -270,49 +255,43 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      // Validate message
       if (!message.trim()) {
         throw new Error('Goodbye message cannot be empty')
       }
 
-      // Use URLSearchParams to properly format query parameters
       const params = new URLSearchParams()
       params.append('chat_id', chatId)
-      params.append('message', message.trim())
       
-      const endpoint = '/api/set_goodbye_message'
+      const endpoint = '/api/goodbye'
       const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Saving goodbye message with URL:', urlString)
 
-      // Use the safe API call function with endpoint tracking
       const response = await safeApiCall(endpoint, () => fetch(urlString, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          enabled: enabled,
+          message: message.trim()
+        })
       }))
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('Error saving goodbye message:', errorText)
         let errorMessage = 'Failed to save goodbye message'
         
         try {
           const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
+          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
         } catch {
-          // If JSON parsing fails, use the error text
           errorMessage = errorText || `${response.status} ${response.statusText}`
         }
         
         throw new Error(errorMessage)
       }
       
-      // Update the local state
       setMessage(message.trim())
-      
-      // Show success notification or feedback to the user
       console.log('Goodbye message saved successfully')
     } catch (error) {
       console.error('Error saving goodbye message:', error)
@@ -443,8 +422,16 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-white text-lg">Enable Goodbye Message</Label>
-            <p className="text-gray-400 text-sm mt-1">
+            <Label 
+              className="text-lg"
+              style={{ color: 'var(--tg-theme-text-color, white)' }}
+            >
+              Enable Goodbye Message
+            </Label>
+            <p 
+              className="text-sm mt-1"
+              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+            >
               When enabled, the bot will automatically post when members leave
             </p>
           </div>
@@ -457,15 +444,28 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-white text-lg">Goodbye Message</Label>
-          <p className="text-gray-400 text-sm mb-2">
+          <Label 
+            className="text-lg"
+            style={{ color: 'var(--tg-theme-text-color, white)' }}
+          >
+            Goodbye Message
+          </Label>
+          <p 
+            className="text-sm mb-2"
+            style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+          >
             This message will be sent when members leave the group
           </p>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Enter your goodbye message here..."
-            className="bg-[#374151] border-gray-600 text-white min-h-[200px]"
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
+            className="min-h-[200px]"
             disabled={isSubmitting}
           />
         </div>
@@ -473,7 +473,11 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
         <Button 
           onClick={handleSaveMessage} 
           disabled={isSubmitting || !message.trim()}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          style={{
+            backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+            color: 'var(--tg-theme-button-text-color, white)'
+          }}
+          className="w-full"
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />

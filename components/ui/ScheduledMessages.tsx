@@ -223,17 +223,14 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
     e.preventDefault()
     
     setIsSubmitting(true)
-    setError(null) // Clear any previous errors
+    setError(null)
     
     try {
-      console.log("Starting form submission for scheduled message");
-      
       const tg = window?.Telegram?.WebApp
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
 
-      // Validate required fields
       const startingAt = Math.floor(startDate.getTime() / 1000)
       const intervalMinutes = parseInt(interval)
       
@@ -241,110 +238,75 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
         throw new Error('Interval must be a positive number')
       }
       
-      // API requires at least one of message_text or media
       if (!editingMessage && !newMessage.trim() && !mediaFile) {
         throw new Error('Either message text or media must be provided')
       }
       
-      // Check file size limit - max 10MB
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+      const MAX_FILE_SIZE = 10 * 1024 * 1024
       if (mediaFile && mediaFile.size > MAX_FILE_SIZE) {
-        throw new Error(`File is too large. Maximum size is 10MB. Your file is ${(mediaFile.size / (1024 * 1024)).toFixed(2)}MB.`);
+        throw new Error(`File is too large. Maximum size is 10MB. Your file is ${(mediaFile.size / (1024 * 1024)).toFixed(2)}MB.`)
       }
 
-      // Convert interval from minutes to seconds
       const intervalSeconds = intervalMinutes * 60
-
-      // Build the API endpoint
-      const isEditing = !!editingMessage;
-      const endpoint = isEditing ? "/api/edit_scheduled_message" : "/api/add_scheduled_message";
-      const baseUrl = "https://robomod.dablietech.club" + endpoint;
+      const isEditing = !!editingMessage
+      const endpoint = isEditing ? "/api/edit_scheduled_message" : "/api/add_scheduled_message"
+      const baseUrl = "https://robomod.dablietech.club" + endpoint
       
-      // Prepare the URL parameters
-      const params = new URLSearchParams();
-      params.append("chat_id", chatId);
+      const params = new URLSearchParams()
+      params.append("chat_id", chatId)
       
       if (isEditing && editingMessage) {
-        params.append("schedule_id", editingMessage.schedule_id);
-        params.append("enabled", isEnabled.toString());
+        params.append("schedule_id", editingMessage.schedule_id)
+        params.append("enabled", isEnabled.toString())
       }
       
-      params.append("starting_at", startingAt.toString());
-      params.append("interval", intervalSeconds.toString());
+      params.append("starting_at", startingAt.toString())
+      params.append("interval", intervalSeconds.toString())
       
-      const url = `${baseUrl}?${params.toString()}`;
-      console.log(`${isEditing ? "Editing" : "Adding"} scheduled message at URL:`, url);
+      const url = `${baseUrl}?${params.toString()}`
       
-      // Prepare the form data
-      const formData = new FormData();
+      const formData = new FormData()
       
       if (newMessage.trim()) {
-        formData.append('message_text', newMessage.trim());
-        console.log("Added message_text to form data:", newMessage.trim());
+        formData.append('message_text', newMessage.trim())
       }
       
       if (mediaFile) {
-        console.log("Adding media file to form data:", mediaFile.name, mediaFile.type, 
-                   `${(mediaFile.size / (1024 * 1024)).toFixed(2)}MB`);
-        formData.append('media', mediaFile);
+        formData.append('media', mediaFile)
       }
       
-      // Log all form data fields for debugging
-      console.log("Form data entries:", [...formData.entries()].map(e => {
-        if (e[0] === 'media') {
-          return `${e[0]}: [File ${(e[1] as File).name}, type: ${(e[1] as File).type}, size: ${(e[1] as File).size} bytes]`;
-        }
-        return `${e[0]}: ${e[1]}`;
-      }));
-      
-      // Make the API request
-      console.log("Making API request to:", url);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tg.initData}`
-          // Note: Do NOT set 'Content-Type' header when using FormData
         },
         body: formData
-      });
+      })
       
-      console.log("API response status:", response.status, response.statusText);
-      console.log("API response headers:", Object.fromEntries(response.headers.entries()));
-      
-      // Process the response
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API Error Response:`, errorText);
-        console.error(`API Error Status:`, response.status);
-        console.error(`API Error Headers:`, Object.fromEntries(response.headers.entries()));
-        
+        const errorText = await response.text()
         let errorMessage = isEditing 
           ? 'Failed to edit scheduled message' 
-          : 'Failed to add scheduled message';
+          : 'Failed to add scheduled message'
         
-        // Check for specific status codes
         if (response.status === 413) {
-          errorMessage = "File is too large. Please upload a smaller file (maximum 10MB).";
+          errorMessage = "File is too large. Please upload a smaller file (maximum 10MB)."
         } else if (response.status === 429) {
-          errorMessage = "Too many requests. Please try again later.";
+          errorMessage = "Too many requests. Please try again later."
         } else {
           try {
-            const errorData = JSON.parse(errorText);
-            errorMessage = errorData?.detail || errorData?.message || errorMessage;
+            const errorData = JSON.parse(errorText)
+            errorMessage = errorData?.detail || errorData?.message || errorMessage
           } catch {
-            // If JSON parsing fails, use the error text
-            errorMessage = errorText || errorMessage;
+            errorMessage = errorText || errorMessage
           }
         }
         
-        throw new Error(errorMessage);
+        throw new Error(errorMessage)
       }
       
-      console.log(`Scheduled message ${isEditing ? "updated" : "created"} successfully`);
-      
-      // Success - reset form and refresh
-      resetForm();
-      fetchScheduledMessages();
+      resetForm()
+      fetchScheduledMessages()
     } catch (error) {
       console.error('Error with scheduled message:', error)
       setError(error instanceof Error ? error.message : 'Failed to process request')
@@ -439,20 +401,33 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
 
   return (
     <div 
-      className="h-full flex flex-col text-white"
-      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1a202c)' }}
+      className="h-full flex flex-col"
+      style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}
     >
-      <div className="p-6 border-b border-[var(--tg-theme-hint-color,rgba(255,255,255,0.1))] backdrop-blur-sm">
-        <h2 className="text-2xl font-semibold tracking-tight text-[var(--tg-theme-text-color,white)]">Scheduled Messages</h2>
-        <p className="text-sm text-[var(--tg-theme-hint-color,#a0aec0)] mt-1">Create and manage automated posts</p>
+      <div 
+        className="p-6 border-b"
+        style={{ borderColor: 'var(--tg-theme-hint-color, #4b5563)' }}
+      >
+        <h2 
+          className="text-2xl font-semibold tracking-tight"
+          style={{ color: 'var(--tg-theme-text-color, white)' }}
+        >
+          Scheduled Messages
+        </h2>
+        <p 
+          className="text-sm mt-1"
+          style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+        >
+          Create and manage automated posts
+        </p>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
         <Card 
-          className="mb-8 shadow-xl border-none"
+          className="mb-8 shadow-xl backdrop-blur-sm"
           style={{
-            backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)',
-            borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+            borderColor: 'var(--tg-theme-hint-color, #4b5563)'
           }}
         >
           <CardContent className="p-6">
@@ -479,86 +454,114 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
             <div 
               className="text-center py-12 rounded-xl border backdrop-blur-sm"
               style={{
-                backgroundColor: 'var(--tg-theme-secondary-bg-color, rgba(0,0,0,0.2))',
-                borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
+                backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+                borderColor: 'var(--tg-theme-hint-color, #4b5563)'
               }}
             >
-              <div className="bg-blue-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-blue-400" />
+              <div 
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: 'var(--tg-theme-button-color, #3b82f6)' }}
+              >
+                <Clock className="w-8 h-8 text-[var(--tg-theme-button-text-color,white)]" />
               </div>
-              <h3 className="text-xl font-medium text-[var(--tg-theme-text-color,white)] mb-2">No Scheduled Messages</h3>
-              <p className="text-[var(--tg-theme-hint-color,#a0aec0)] max-w-sm mx-auto">Create your first scheduled post to start automating your content delivery</p>
+              <h3 
+                className="text-xl font-medium mb-2"
+                style={{ color: 'var(--tg-theme-text-color, white)' }}
+              >
+                No Scheduled Messages
+              </h3>
+              <p 
+                className="max-w-sm mx-auto"
+                style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+              >
+                Create your first scheduled post to start automating your content delivery
+              </p>
             </div>
           ) : (
             messages.map((message) => (
               <Card 
                 key={message.schedule_id} 
-                className="backdrop-blur-sm hover:brightness-110 transition-all border-none shadow-md"
+                className="backdrop-blur-sm hover:brightness-110 transition-all"
                 style={{
-                  backgroundColor: 'var(--tg-theme-secondary-bg-color, #2d3748)',
-                  borderColor: 'var(--tg-theme-hint-color, rgba(255,255,255,0.1))'
+                  backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+                  borderColor: 'var(--tg-theme-hint-color, #4b5563)'
                 }}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div className="bg-blue-500/10 p-2 rounded-lg shrink-0">
+                    <div 
+                      className="p-2 rounded-lg shrink-0"
+                      style={{ backgroundColor: 'var(--tg-theme-button-color, #3b82f6)' }}
+                    >
                       {(() => {
-                        // Use schedule_id as fallback key if message_id is 0
-                        const contentKey = message.message_id && message.message_id !== 0 ? message.message_id : message.schedule_id;
-                        const content = messageContents[contentKey];
+                        const contentKey = message.message_id && message.message_id !== 0 ? message.message_id : message.schedule_id
+                        const content = messageContents[contentKey]
                         switch (content?.fetched_media_type) {
-                          case 'photo': return <ImageIcon className="w-5 h-5 text-blue-400" />;
-                          case 'video': return <Video className="w-5 h-5 text-blue-400" />;
-                          // Using Clock as temporary placeholder for document/text icon
-                          case 'document': return <Clock className="w-5 h-5 text-blue-400" />;
-                          case 'text': return <Clock className="w-5 h-5 text-blue-400" />;
-                          default: return <Clock className="w-5 h-5 text-blue-400" />; // Default or loading
+                          case 'photo': return <ImageIcon className="w-5 h-5 text-[var(--tg-theme-button-text-color,white)]" />
+                          case 'video': return <Video className="w-5 h-5 text-[var(--tg-theme-button-text-color,white)]" />
+                          case 'document': return <Clock className="w-5 h-5 text-[var(--tg-theme-button-text-color,white)]" />
+                          case 'text': return <Clock className="w-5 h-5 text-[var(--tg-theme-button-text-color,white)]" />
+                          default: return <Clock className="w-5 h-5 text-[var(--tg-theme-button-text-color,white)]" />
                         }
                       })()}
                     </div>
                     <div className="flex-grow min-w-0">
-                      <div className="mb-2 text-[var(--tg-theme-text-color,white)] break-words line-clamp-3">
+                      <div 
+                        className="mb-2 break-words line-clamp-3"
+                        style={{ color: 'var(--tg-theme-text-color, white)' }}
+                      >
                         {(() => {
-                          // Use schedule_id as fallback key if message_id is 0
-                          const contentKey = message.message_id && message.message_id !== 0 ? message.message_id : message.schedule_id;
-                          const content = messageContents[contentKey];
+                          const contentKey = message.message_id && message.message_id !== 0 ? message.message_id : message.schedule_id
+                          const content = messageContents[contentKey]
                           if (content?.fetched_message_text) {
-                            return content.fetched_message_text;
+                            return content.fetched_message_text
                           } else if (content?.fetched_media_type && content.fetched_media_type !== 'text') {
-                            return <span className="italic text-[var(--tg-theme-hint-color,#a0aec0)]">{`${content.fetched_media_type.charAt(0).toUpperCase() + content.fetched_media_type.slice(1)} file`}</span>;
+                            return <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }} className="italic">
+                              {`${content.fetched_media_type.charAt(0).toUpperCase() + content.fetched_media_type.slice(1)} file`}
+                            </span>
                           } else if (message.message_id === 0 || content === undefined) {
-                            // Loading or invalid ID state
-                            return <span className="italic text-[var(--tg-theme-hint-color,#a0aec0)]">Loading content...</span>;
+                            return <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }} className="italic">
+                              Loading content...
+                            </span>
                           } else {
-                            // Fallback if fetch failed or no content
-                            return <span className="italic text-[var(--tg-theme-hint-color,#a0aec0)]">Content unavailable</span>;
+                            return <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }} className="italic">
+                              Content unavailable
+                            </span>
                           }
                         })()}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm">
-                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
-                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Starts:</span>
-                          {format(new Date(message.starting_at * 1000), "PP p")}
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: 'var(--tg-theme-text-color, white)' }} className="font-medium">Starts:</span>
+                          <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                            {format(new Date(message.starting_at * 1000), "PP p")}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
-                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Interval:</span>
-                          {Math.round(message.interval / 60)} min
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: 'var(--tg-theme-text-color, white)' }} className="font-medium">Interval:</span>
+                          <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                            {Math.round(message.interval / 60)} min
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${message.enabled ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                          <span className="text-[var(--tg-theme-hint-color,#a0aec0)]">
+                          <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
                             {message.enabled ? 'Active' : 'Paused'}
                           </span>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm">
-                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
-                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Last Run:</span>
-                          {message.last_run ? format(new Date(message.last_run * 1000), "PP p") : 'Never'}
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: 'var(--tg-theme-text-color, white)' }} className="font-medium">Last Run:</span>
+                          <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                            {message.last_run ? format(new Date(message.last_run * 1000), "PP p") : 'Never'}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2 text-[var(--tg-theme-hint-color,#a0aec0)]">
-                          <span className="font-medium text-[var(--tg-theme-text-color,white)]">Next Run:</span>
-                          {format(new Date(message.next_run * 1000), "PP p")}
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: 'var(--tg-theme-text-color, white)' }} className="font-medium">Next Run:</span>
+                          <span style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+                            {format(new Date(message.next_run * 1000), "PP p")}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -567,7 +570,11 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(message)}
-                        className="h-9 w-9 text-[var(--tg-theme-hint-color,#a0aec0)] hover:bg-[var(--tg-theme-button-color,rgba(255,255,255,0.1))] hover:text-[var(--tg-theme-button-text-color,white)] transition-colors"
+                        style={{
+                          color: 'var(--tg-theme-hint-color, #a0aec0)',
+                          backgroundColor: 'var(--tg-theme-button-color, rgba(255,255,255,0.1))',
+                        }}
+                        className="h-9 w-9 hover:bg-[var(--tg-theme-button-color)] hover:text-[var(--tg-theme-button-text-color)] transition-colors"
                       >
                         <FiEdit2 className="h-4 w-4" />
                       </Button>
@@ -575,7 +582,11 @@ export default function ScheduledMessages({ chatId }: { chatId: string }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(message.schedule_id)}
-                        className="h-9 w-9 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                        style={{
+                          color: 'var(--tg-theme-hint-color, #a0aec0)',
+                          backgroundColor: 'var(--tg-theme-button-color, rgba(255,255,255,0.1))',
+                        }}
+                        className="h-9 w-9 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                       >
                         <FiTrash2 className="h-4 w-4" />
                       </Button>

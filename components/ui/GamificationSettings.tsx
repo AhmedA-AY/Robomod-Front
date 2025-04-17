@@ -233,7 +233,15 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
           'Authorization': `Bearer ${tg.initData}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...settings, enabled })
+        body: JSON.stringify({
+          enabled,
+          point_allocations: settings.point_allocations,
+          level_settings: settings.level_settings,
+          badge_settings: settings.badge_settings,
+          leaderboard_settings: settings.leaderboard_settings,
+          challenge_settings: settings.challenge_settings,
+          reward_settings: settings.reward_settings
+        })
       }))
       
       if (!response.ok) {
