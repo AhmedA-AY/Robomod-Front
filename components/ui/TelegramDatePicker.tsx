@@ -92,7 +92,8 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
     // Add weekday headers
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div key={`header-${i}`} className="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">
+        <div key={`header-${i}`} className="w-10 h-10 flex items-center justify-center text-sm" 
+             style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
           {weekdays[i]}
         </div>
       )
@@ -120,11 +121,12 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
           key={`day-${day}`}
           type="button"
           onClick={() => handleDateSelect(day)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm
-            ${isSelected ? 'bg-blue-500 hover:bg-blue-600' : ''}
-            ${isToday && !isSelected ? 'bg-gray-700' : ''}
-            ${!isSelected && !isToday ? 'hover:bg-gray-700' : ''}
-          `}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-sm"
+          style={{
+            backgroundColor: isSelected ? 'var(--tg-theme-button-color, #3b82f6)' : 
+                             isToday ? 'var(--tg-theme-secondary-bg-color, #374151)' : 'transparent',
+            color: isSelected ? 'var(--tg-theme-button-text-color, white)' : 'var(--tg-theme-text-color, white)'
+          }}
         >
           {day}
         </button>
@@ -138,19 +140,28 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
   if (!isMounted) {
     return (
       <div className="relative w-full">
-        <Label className="text-gray-300">{label}</Label>
-        <div className="h-10 bg-[#374151] border border-gray-600 rounded-md"></div>
+        <Label style={{ color: 'var(--tg-theme-text-color, #d1d5db)' }}>{label}</Label>
+        <div className="h-10 rounded-md" style={{ 
+          backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+          borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+          border: '1px solid'
+        }}></div>
       </div>
     );
   }
 
   return (
     <div className="relative w-full" ref={containerRef}>
-      <Label className="text-gray-300">{label}</Label>
+      <Label style={{ color: 'var(--tg-theme-text-color, #d1d5db)' }}>{label}</Label>
       <Button
         type="button"
         variant="outline"
-        className="w-full justify-start text-left font-normal bg-[#374151] border-gray-600 text-white hover:bg-gray-700"
+        className="w-full justify-start text-left font-normal hover:bg-opacity-70"
+        style={{
+          backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+          borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+          color: 'var(--tg-theme-text-color, white)'
+        }}
         onClick={() => setIsOpen(!isOpen)}
       >
         <Clock className="mr-2 h-4 w-4" />
@@ -159,11 +170,14 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
       
       {isOpen && currentMonth && (
         <div 
-          className="absolute z-[9999] mt-1 bg-[#2d3748] border border-gray-600 rounded-md shadow-lg"
+          className="absolute z-[9999] mt-1 rounded-md shadow-lg"
           style={{ 
             width: '300px',
             maxHeight: 'calc(100vh - 100px)',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            backgroundColor: 'var(--tg-theme-bg-color, #2d3748)',
+            borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+            border: '1px solid'
           }}
         >
           <div className="p-3">
@@ -172,21 +186,29 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
               <button 
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1 rounded-full hover:bg-gray-700"
+                className="p-1 rounded-full hover:bg-opacity-70"
+                style={{ 
+                  backgroundColor: 'transparent',
+                  color: 'var(--tg-theme-hint-color, #a0aec0)'
+                }}
               >
-                <span className="h-5 w-5 text-gray-400">←</span>
+                <span className="h-5 w-5">←</span>
               </button>
               
-              <div className="text-white font-medium">
+              <div style={{ color: 'var(--tg-theme-text-color, white)' }} className="font-medium">
                 {format(currentMonth, "MMMM yyyy")}
               </div>
               
               <button 
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1 rounded-full hover:bg-gray-700"
+                className="p-1 rounded-full hover:bg-opacity-70"
+                style={{ 
+                  backgroundColor: 'transparent',
+                  color: 'var(--tg-theme-hint-color, #a0aec0)'
+                }}
               >
-                <span className="h-5 w-5 text-gray-400">→</span>
+                <span className="h-5 w-5">→</span>
               </button>
             </div>
             
@@ -197,12 +219,17 @@ export function TelegramDatePicker({ date, setDate, label = "Date & Time" }: Tel
           </div>
           
           {/* Time picker */}
-          <div className="p-3 border-t border-gray-600">
+          <div className="p-3" style={{ borderTop: '1px solid var(--tg-theme-hint-color, #4b5563)' }}>
             <Input
               type="time"
               value={format(date, "HH:mm")}
               onChange={handleTimeChange}
-              className="bg-[#374151] border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="focus:ring-1 focus:ring-[var(--tg-theme-button-color,#3b82f6)]"
+              style={{
+                backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+                borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+                color: 'var(--tg-theme-text-color, white)'
+              }}
             />
           </div>
         </div>
