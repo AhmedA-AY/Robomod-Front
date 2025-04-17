@@ -9,6 +9,8 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import dynamic from 'next/dynamic'
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 // Dynamically import the form to prevent hydration issues
 const ScheduleForm = dynamic(() => import('@/components/ui/ScheduleForm').then(mod => mod.ScheduleForm), {

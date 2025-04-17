@@ -9,12 +9,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from 'lucide-react'
 import { FiUpload } from 'react-icons/fi'
 import { TelegramDatePicker } from "@/components/ui/TelegramDatePicker"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 
 interface ScheduledMessage {
   schedule_id: string;
@@ -109,41 +103,73 @@ export function ScheduleForm({
           label="Start Date & Time"
         />
 
-        <div>
-          <Label className="text-gray-300">Interval (minutes)</Label>
+        <div className="space-y-2">
+          <Label 
+            style={{ color: 'var(--tg-theme-text-color, white)' }}
+          >
+            Interval (minutes)
+          </Label>
           <Input
             type="number"
+            min="1"
             value={interval}
             onChange={(e) => setInterval(e.target.value)}
-            min="1"
-            className="bg-[#374151] border-gray-600 text-white"
+            disabled={isSubmitting}
+            className="bg-transparent"
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
           />
           {!hasValidInterval && interval !== '' && (
-            <p className="text-amber-400 text-sm mt-2">
+            <p 
+              className="text-sm mt-2"
+              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+            >
               Please enter a valid interval greater than 0
             </p>
           )}
         </div>
 
-        <div>
-          <Label className="text-gray-300">Message</Label>
+        <div className="space-y-2">
+          <Label 
+            style={{ color: 'var(--tg-theme-text-color, white)' }}
+          >
+            Message
+          </Label>
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="bg-[#374151] border-gray-600 text-white min-h-[120px]"
+            placeholder="Type your message here..."
+            disabled={isSubmitting}
+            className="bg-transparent"
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)',
+              minHeight: '120px'
+            }}
           />
         </div>
 
         {editingMessage && (
           <div className="flex items-center gap-2">
-            <Label className="text-gray-300">Status</Label>
+            <Label 
+              style={{ color: 'var(--tg-theme-text-color, white)' }}
+            >
+              Status
+            </Label>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant={isEnabled ? "default" : "outline"}
                 onClick={() => setIsEnabled(true)}
-                className={`${isEnabled ? 'bg-green-500 hover:bg-green-600' : 'bg-[#374151] border-gray-600 text-white hover:bg-gray-700'}`}
+                style={{
+                  backgroundColor: isEnabled ? 'var(--tg-theme-button-color, #3b82f6)' : 'var(--tg-theme-bg-color, #1f2937)',
+                  color: 'var(--tg-theme-button-text-color, white)',
+                  borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+                }}
               >
                 Active
               </Button>
@@ -151,7 +177,11 @@ export function ScheduleForm({
                 type="button"
                 variant={!isEnabled ? "default" : "outline"}
                 onClick={() => setIsEnabled(false)}
-                className={`${!isEnabled ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-[#374151] border-gray-600 text-white hover:bg-gray-700'}`}
+                style={{
+                  backgroundColor: !isEnabled ? 'var(--tg-theme-button-color, #3b82f6)' : 'var(--tg-theme-bg-color, #1f2937)',
+                  color: 'var(--tg-theme-button-text-color, white)',
+                  borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+                }}
               >
                 Inactive
               </Button>
@@ -161,7 +191,6 @@ export function ScheduleForm({
       </div>
 
       <div className="flex items-center gap-4">
-        {/* File Upload Section - Allow to shrink and truncate text */}
         <div className="flex-1 min-w-0">
           <input
             ref={fileInputRef}
@@ -172,45 +201,30 @@ export function ScheduleForm({
             aria-label="Upload media file"
             onChange={handleFileChange}
           />
-          {/* Wrap Button with Tooltip */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full text-left overflow-hidden flex items-center justify-start"
-                  style={{
-                    backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
-                    color: 'var(--tg-theme-text-color, white)',
-                    borderColor: 'var(--tg-theme-hint-color, #4b5563)',
-                  }}
-                >
-                  <FiUpload className="w-4 h-4 mr-2 flex-shrink-0" />
-                  {/* Truncate filename if too long */}
-                  <span className="truncate">
-                    {mediaFile ? mediaFile.name : 'Upload Media'}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              {/* Show full filename in Tooltip only if a file is selected */}
-              {mediaFile && (
-                <TooltipContent>
-                  <p>{mediaFile.name}</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full text-left overflow-hidden flex items-center justify-start"
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              color: 'var(--tg-theme-text-color, white)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+            }}
+          >
+            <FiUpload className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">
+              {mediaFile ? mediaFile.name : 'Upload Media'}
+            </span>
+          </Button>
         </div>
-        {/* Submit Button Section - Fixed width */}
         <div className="flex-shrink-0">
           <Button
             type="submit"
             disabled={isSubmitting || !canSubmit}
             style={{
               backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
-              color: 'var(--tg-theme-button-text-color, white)',
+              color: 'var(--tg-theme-button-text-color, white)'
             }}
             className="min-w-[140px] flex items-center justify-center disabled:opacity-50"
           >

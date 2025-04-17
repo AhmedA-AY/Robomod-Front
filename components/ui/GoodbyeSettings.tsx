@@ -494,29 +494,30 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
       <div className="space-y-4">
         <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
           <CardContent className="p-6">
-            <h3 className="text-xl font-medium text-white mb-4">Tips for effective goodbye messages</h3>
-            <ul className="space-y-2 text-gray-300">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Keep the message respectful and positive
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Avoid being overly emotional or negative
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Use appropriate tone based on your community style
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Use <code>{'{username}'}</code> to mention the departed member
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Consider mentioning how to rejoin if they want to come back
-              </li>
-            </ul>
+            <div 
+              className="mt-6 p-4 rounded-lg"
+              style={{
+                backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+                borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+              }}
+            >
+              <h3 
+                className="text-lg font-medium mb-3"
+                style={{ color: 'var(--tg-theme-text-color, white)' }}
+              >
+                Tips for effective goodbye messages
+              </h3>
+              <ul 
+                className="space-y-2 list-disc pl-5"
+                style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+              >
+                <li>Keep the message respectful and positive</li>
+                <li>Avoid being overly emotional or negative</li>
+                <li>Use appropriate tone based on your community style</li>
+                <li>Use <code className="px-1 py-0.5 rounded bg-[var(--tg-theme-bg-color,#1f2937)] text-[var(--tg-theme-text-color,white)]">{'{username}'}</code> to mention the departed member</li>
+                <li>Consider mentioning how to rejoin if they want to come back</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </div>
