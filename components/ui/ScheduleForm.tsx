@@ -110,28 +110,50 @@ export function ScheduleForm({
         />
 
         <div>
-          <Label className="text-gray-300">Interval (minutes)</Label>
+          <Label 
+            className="text-lg"
+            style={{ color: 'var(--tg-theme-text-color, white)' }}
+          >
+            Interval (minutes)
+          </Label>
           <Input
             type="number"
             value={interval}
             onChange={(e) => setInterval(e.target.value)}
             min="1"
-            className="bg-[#374151] border-gray-600 text-white"
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
           />
           {!hasValidInterval && interval !== '' && (
-            <p className="text-amber-400 text-sm mt-2">
+            <p 
+              className="text-sm mt-2"
+              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+            >
               Please enter a valid interval greater than 0
             </p>
           )}
         </div>
 
         <div>
-          <Label className="text-gray-300">Message</Label>
+          <Label 
+            className="text-lg"
+            style={{ color: 'var(--tg-theme-text-color, white)' }}
+          >
+            Message
+          </Label>
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            className="bg-[#374151] border-gray-600 text-white min-h-[120px]"
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
+            className="min-h-[120px]"
           />
         </div>
 

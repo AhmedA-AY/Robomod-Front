@@ -428,7 +428,71 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
           }}
         >
           <CardContent className="p-6">
-            {renderGoodbyeForm()}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label 
+                    className="text-lg"
+                    style={{ color: 'var(--tg-theme-text-color, white)' }}
+                  >
+                    Enable Goodbye Message
+                  </Label>
+                  <p 
+                    className="text-sm mt-1"
+                    style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+                  >
+                    When enabled, the bot will automatically post when members leave
+                  </p>
+                </div>
+                <Switch 
+                  checked={enabled} 
+                  onCheckedChange={handleToggleGoodbye}
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label 
+                  className="text-lg"
+                  style={{ color: 'var(--tg-theme-text-color, white)' }}
+                >
+                  Goodbye Message
+                </Label>
+                <p 
+                  className="text-sm mb-2"
+                  style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+                >
+                  This message will be sent when members leave the group
+                </p>
+                <Textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Enter your goodbye message here..."
+                  style={{
+                    backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+                    borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+                    color: 'var(--tg-theme-text-color, white)'
+                  }}
+                  className="min-h-[200px]"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <Button 
+                onClick={handleSaveMessage} 
+                disabled={isSubmitting || !message.trim()}
+                style={{
+                  backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+                  color: 'var(--tg-theme-button-text-color, white)'
+                }}
+                className="w-full"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Save Goodbye Message
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
