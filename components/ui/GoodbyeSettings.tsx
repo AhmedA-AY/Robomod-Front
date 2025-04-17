@@ -552,29 +552,65 @@ export default function GoodbyeSettings({ chatId }: { chatId: string }) {
   function renderTips() {
     return (
       <div className="space-y-4">
-        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+        <Card 
+          className="backdrop-blur-sm"
+          style={{
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+            borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+          }}
+        >
           <CardContent className="p-6">
-            <h3 className="text-xl font-medium text-white mb-4">Tips for effective goodbye messages</h3>
-            <ul className="space-y-2 text-gray-300">
+            <h3 
+              className="text-xl font-medium mb-4"
+              style={{ color: 'var(--tg-theme-text-color, white)' }}
+            >
+              Tips for effective goodbye messages
+            </h3>
+            <ul className="space-y-2">
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Keep the message respectful and positive
+                <span 
+                  className="font-bold"
+                  style={{ color: 'var(--tg-theme-button-color, #3b82f6)' }}
+                >•</span>
+                <span style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                  Keep the message respectful and positive
+                </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Avoid being overly emotional or negative
+                <span 
+                  className="font-bold"
+                  style={{ color: 'var(--tg-theme-button-color, #3b82f6)' }}
+                >•</span>
+                <span style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                  Avoid being overly emotional or negative
+                </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Use appropriate tone based on your community style
+                <span 
+                  className="font-bold"
+                  style={{ color: 'var(--tg-theme-button-color, #3b82f6)' }}
+                >•</span>
+                <span style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                  Use appropriate tone based on your community style
+                </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Use <code>{'{username}'}</code> to mention the departed member
+                <span 
+                  className="font-bold"
+                  style={{ color: 'var(--tg-theme-button-color, #3b82f6)' }}
+                >•</span>
+                <span style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                  Use <code className="px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)', color: 'var(--tg-theme-text-color, white)' }}>{'{username}'}</code> to mention the departed member
+                </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Consider mentioning how to rejoin if they want to come back
+                <span 
+                  className="font-bold"
+                  style={{ color: 'var(--tg-theme-button-color, #3b82f6)' }}
+                >•</span>
+                <span style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                  Consider mentioning how to rejoin if they want to come back
+                </span>
               </li>
             </ul>
           </CardContent>
