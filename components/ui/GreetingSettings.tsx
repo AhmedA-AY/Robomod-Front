@@ -325,7 +325,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
   if (isLoading && retryCount === 0 && !fetchFailed) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--tg-theme-text-color)]" />
       </div>
     )
   }
@@ -334,17 +334,17 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
   // but also provide a way to continue using the form with default values
   if (error && fetchFailed) {
     return (
-      <div className="h-full flex flex-col bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-        <div className="p-6 border-b border-gray-700/50">
-          <h2 className="text-2xl font-semibold tracking-tight">Greeting Settings</h2>
-          <p className="text-sm text-gray-400 mt-1">Manage your automated welcome messages</p>
+      <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}>
+        <div className="p-6 border-b" style={{ borderColor: 'var(--tg-theme-hint-color, #4b5563)' }}>
+          <h2 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--tg-theme-text-color, white)' }}>Greeting Settings</h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>Manage your automated welcome messages</p>
         </div>
 
         <div className="flex-1 overflow-auto p-6">
-          <div className="mb-6 bg-destructive/10 p-6 rounded-lg">
-            <p className="text-destructive font-medium text-lg mb-2">Error Loading Settings</p>
-            <p className="text-foreground/90 mb-4">{error}</p>
-            <p className="text-foreground/70 text-sm mb-4">
+          <div className="mb-6 p-6 rounded-lg" style={{ backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)' }}>
+            <p className="font-medium text-lg mb-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>Error Loading Settings</p>
+            <p className="mb-4" style={{ color: 'var(--tg-theme-text-color, white)' }}>{error}</p>
+            <p className="text-sm mb-4" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
               You can still configure your greeting settings below. Default values have been provided.
             </p>
             <Button 
@@ -353,7 +353,10 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
                 setFetchFailed(false);
                 fetchGreetingSettings().catch(() => console.log('Manual retry failed'));
               }}
-              className="bg-primary text-white"
+              style={{
+                backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+                color: 'var(--tg-theme-button-text-color, white)'
+              }}
               size="sm"
             >
               Retry Loading Settings
@@ -361,7 +364,10 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
           </div>
 
           {/* Show the form with default values */}
-          <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm mb-8 shadow-xl">
+          <Card className="mb-8 shadow-xl backdrop-blur-sm" style={{
+            backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+            borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+          }}>
             <CardContent className="p-6">
               {renderGreetingForm()}
             </CardContent>
@@ -443,8 +449,8 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-white text-lg">Enable Welcome Message</Label>
-            <p className="text-gray-400 text-sm mt-1">
+            <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Enable Welcome Message</Label>
+            <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
               When enabled, the bot will automatically greet new members
             </p>
           </div>
@@ -452,20 +458,27 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
             checked={enabled} 
             onCheckedChange={handleToggleGreeting}
             disabled={isSubmitting}
-            className="data-[state=checked]:bg-green-500"
+            style={{
+              backgroundColor: enabled ? 'var(--tg-theme-button-color, #3b82f6)' : 'var(--tg-theme-hint-color, #4b5563)'
+            }}
           />
         </div>
 
         <div className="space-y-2">
-          <Label className="text-white text-lg">Greeting Message</Label>
-          <p className="text-gray-400 text-sm mb-2">
+          <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Greeting Message</Label>
+          <p className="text-sm mb-2" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
             This message will be sent to new members when they join
           </p>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Enter your greeting message here..."
-            className="bg-[#374151] border-gray-600 text-white min-h-[200px]"
+            style={{
+              backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
+            className="min-h-[200px]"
             disabled={isSubmitting}
           />
         </div>
@@ -473,7 +486,11 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
         <Button 
           onClick={handleSaveMessage} 
           disabled={isSubmitting || !message.trim()}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          style={{
+            backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
+            color: 'var(--tg-theme-button-text-color, white)'
+          }}
+          className="w-full"
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -488,33 +505,36 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
   function renderTips() {
     return (
       <div className="space-y-4">
-        <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+        <Card style={{
+          backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+          borderColor: 'var(--tg-theme-hint-color, #4b5563)'
+        }} className="backdrop-blur-sm">
           <CardContent className="p-6">
-            <h3 className="text-xl font-medium text-white mb-4">Tips for effective greeting messages</h3>
-            <ul className="space-y-2 text-gray-300">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
+            <h3 className="text-xl font-medium mb-4" style={{ color: 'var(--tg-theme-text-color, white)' }}>Tips for effective greeting messages</h3>
+            <ul className="space-y-2">
+              <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
                 Welcome new members warmly and make them feel included
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
+              <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
                 Introduce the purpose of your group or channel
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
+              <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
                 Share important rules or guidelines
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
+              <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
                 Include helpful resources for newcomers
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
+              <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
                 Keep it concise but informative
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold">•</span>
-                Use <code>{'{username}'}</code> to mention the new member
+              <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
+                <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
+                Use <code style={{ color: 'var(--tg-theme-text-color, white)' }}>{'{username}'}</code> to mention the new member
               </li>
             </ul>
           </CardContent>
