@@ -26,11 +26,35 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
     setIsLoading(true);
     setError(null);
     try {
-      console.log("History fetched (placeholder)");
-      setHistory([]);
+      const tg = window?.Telegram?.WebApp;
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized');
+      }
+
+      const response = await fetch(`https://robomod.dablietech.club/api/ai/history?chat_id=${chatId}`, {
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to fetch chat history');
+      }
+
+      const data = await response.json();
+      if (Array.isArray(data.history)) {
+        setHistory(data.history.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content
+        })));
+      } else {
+        setHistory([]);
+      }
     } catch (e) {
       console.error("Failed to fetch history:", e);
-      setError('Failed to load chat history. Please try again later.');
+      setError(e instanceof Error ? e.message : 'Failed to load chat history. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -46,13 +70,37 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
     setError(null);
 
     try {
-      console.log("Message sent, waiting for reply (placeholder)");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const assistantMessage: ChatMessage = { role: 'assistant', content: "This is a placeholder reply." };
+      const tg = window?.Telegram?.WebApp;
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized');
+      }
+
+      const response = await fetch('https://robomod.dablietech.club/api/ai/query', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: message,
+          chat_id: parseInt(chatId)
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to get AI response');
+      }
+
+      const data = await response.json();
+      const assistantMessage: ChatMessage = { 
+        role: 'assistant', 
+        content: data.response || "I'm sorry, I couldn't process your request at this time."
+      };
       setHistory(prev => [...prev, assistantMessage]);
     } catch (e) {
       console.error("Failed to send message:", e);
-      setError('Failed to send message. Please check your connection and try again.');
+      setError(e instanceof Error ? e.message : 'Failed to send message. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
