@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import GamificationSettings from '@/components/ui/GamificationSettings'
+import ScheduleSettings from '@/components/ui/ScheduleSettings'
 
 interface Chat {
   id: number;
@@ -43,10 +44,6 @@ export function useChatContext() {
 
 // Dynamically import components with ssr: false to avoid hydration issues
 const AIChatInterface = dynamic(() => import('@/components/ui/AIChatInterface'), { 
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
-})
-const ScheduledMessages = dynamic(() => import('@/components/ui/ScheduledMessages'), { 
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
@@ -189,7 +186,7 @@ export default function Home() {
             className="flex-1 overflow-hidden"
           >
             {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id.toString()} />}
-            {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
+            {activeTab === 'scheduled' && <ScheduleSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'greeting' && <GreetingSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'goodbye' && <GoodbyeSettings chatId={selectedChat.id.toString()} />}

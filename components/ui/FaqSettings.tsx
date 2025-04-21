@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from 'lucide-react'
 import * as React from "react"
+import { getFaqSettings, toggleFaq, setFaqMessage } from '@/lib/api'
 
 interface FaqSettings {
   enabled: boolean;
@@ -31,7 +32,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
   const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
   // Helper function to ensure rate limiting compliance
-  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<Response>): Promise<Response> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<any>): Promise<any> => {
     const now = Date.now()
     const lastCallTime = lastApiCallsRef.current[endpoint] || 0
     const timeSinceLastCall = now - lastCallTime
@@ -60,93 +61,23 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       setError(null)
       
       const tg = window?.Telegram?.WebApp
-      if (!tg || !tg.initData) {
-        console.error('Telegram Web App not initialized')
-        setError('Telegram Web App is not initialized')
+      if (!tg?.initData || !tg?.initDataUnsafe?.user?.id) {
+        console.error('Telegram Web App not initialized or user not authenticated')
+        setError('Telegram Web App is not initialized or user not authenticated')
         setFetchFailed(true)
         return
       }
 
-      // Use URLSearchParams to properly format query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
-      
-      const endpoint = '/api/get_faq_settings'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Fetching FAQ settings from URL:', urlString)
+      const userId = tg.initDataUnsafe.user.id
+      if (!userId) {
+        throw new Error('User ID is not available')
+      }
 
       try {
         // Use the safe API call function with endpoint tracking
-        const response = await safeApiCall(endpoint, () => fetch(urlString, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-            'Content-Type': 'application/json',
-          },
-        }))
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('Error response from API:', errorText)
-          let errorMessage = 'Failed to fetch FAQ settings'
-          
-          try {
-            const errorData = JSON.parse(errorText)
-            errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
-          } catch {
-            // If JSON parsing fails, use the error text
-            errorMessage = errorText || `${response.status} ${response.statusText}`
-          }
-          
-          throw new Error(errorMessage)
-        }
-
-        // Get response as text first so we can inspect and handle malformed JSON
-        const responseText = await response.text()
-        console.log('Raw API response:', responseText)
-        
-        let data
-        
-        if (!responseText || responseText.trim() === '') {
-          console.warn('Empty response from API, using default values')
-          data = { enabled: false, message: '' }
-        } else {
-          try {
-            // Try to parse the response as JSON
-            data = JSON.parse(responseText)
-          } catch (parseError) {
-            console.error('Error parsing JSON response:', parseError)
-            console.warn('Attempting to fix malformed JSON response')
-            
-            // Basic fix for known malformed response format
-            // The API sometimes returns: "faq": ( "enabled": false, "message_id*: null
-            // Try to extract values using regex as a fallback
-            let enabled = false
-            let message = ''
-            
-            try {
-              // Try to extract "enabled" value
-              const enabledMatch = responseText.match(/"enabled"\s*:\s*(true|false)/)
-              if (enabledMatch && enabledMatch[1]) {
-                enabled = enabledMatch[1] === 'true'
-              }
-              
-              // Try to extract message
-              const messageMatch = responseText.match(/"message(?:_id)?"\s*:\s*"([^"]*)"/)
-              if (messageMatch && messageMatch[1]) {
-                message = messageMatch[1]
-              }
-              
-              // Create a valid data object
-              data = { enabled, message }
-              console.log('Extracted data from malformed JSON:', data)
-            } catch (extractError) {
-              console.error('Failed to extract data from malformed JSON:', extractError)
-              // Fallback to default values
-              data = { enabled: false, message: '' }
-            }
-          }
-        }
+        const data = await safeApiCall('getFaqSettings', () => 
+          getFaqSettings(tg.initData, parseInt(chatId), userId)
+        )
         
         console.log('Processed FAQ settings:', data)
         
@@ -217,59 +148,21 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       setError(null)
       
       const tg = window?.Telegram?.WebApp
-      if (!tg || !tg.initData) {
-        throw new Error('Telegram Web App is not initialized')
+      if (!tg?.initData || !tg?.initDataUnsafe?.user?.id) {
+        throw new Error('Telegram Web App is not initialized or user not authenticated')
       }
 
-      // Use URLSearchParams to properly format query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
-      params.append('enabled', newEnabledState.toString())
-      
-      const endpoint = '/api/toggle_faq'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Toggling FAQ with URL:', urlString)
-      console.log('Request details:', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        },
-      })
+      const userId = tg.initDataUnsafe.user.id
+      if (!userId) {
+        throw new Error('User ID is not available')
+      }
 
       // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => {
-        console.log('Making API call to:', urlString)
-        return fetch(urlString, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-            'Content-Type': 'application/json',
-          },
-        })
-      })
+      await safeApiCall('toggleFaq', () => 
+        toggleFaq(tg.initData, parseInt(chatId), userId, newEnabledState)
+      )
       
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error toggling FAQ:', errorText)
-        let errorMessage = 'Failed to toggle FAQ settings'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
-      }
-
-      // Update local state after successful API call
       setEnabled(newEnabledState)
-      
-      // Update the settings object after successful API call
-      setMessage(message.trim())
     } catch (error) {
       console.error('Error toggling FAQ:', error)
       setError(error instanceof Error ? error.message : 'Failed to toggle FAQ')
@@ -284,54 +177,21 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       setError(null)
       
       const tg = window?.Telegram?.WebApp
-      if (!tg || !tg.initData) {
-        throw new Error('Telegram Web App is not initialized')
+      if (!tg?.initData || !tg?.initDataUnsafe?.user?.id) {
+        throw new Error('Telegram Web App is not initialized or user not authenticated')
       }
 
-      // Validate message
-      if (!message.trim()) {
-        throw new Error('FAQ message cannot be empty')
+      const userId = tg.initDataUnsafe.user.id
+      if (!userId) {
+        throw new Error('User ID is not available')
       }
-
-      // Use URLSearchParams to properly format query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
-      params.append('message', message.trim())
-      
-      const endpoint = '/api/set_faq_message'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Saving FAQ message with URL:', urlString)
 
       // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        },
-      }))
+      await safeApiCall('setFaqMessage', () => 
+        setFaqMessage(tg.initData, parseInt(chatId), userId, message)
+      )
       
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error saving FAQ message:', errorText)
-        let errorMessage = 'Failed to save FAQ message'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
-      }
-
-      // Update the settings object after successful API call
-      setMessage(message.trim())
-      
-      // Show success notification or feedback to the user
-      console.log('FAQ message saved successfully')
+      // No need to update local state as the message is already set
     } catch (error) {
       console.error('Error saving FAQ message:', error)
       setError(error instanceof Error ? error.message : 'Failed to save FAQ message')

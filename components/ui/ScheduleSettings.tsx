@@ -8,11 +8,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import * as React from "react"
 import { Label } from "@/components/ui/label"
-import { getGreetingSettings, toggleGreeting, setGreetingMessage } from '@/lib/api'
+import { getScheduleSettings, toggleSchedule, setScheduleMessage } from '@/lib/api'
 
-interface GreetingSettings {
+interface ScheduleSettings {
   enabled: boolean;
   message: string;
+  scheduleTime: string;
 }
 
 // Type for tracking API timestamps
@@ -20,11 +21,12 @@ interface EndpointTimestamps {
   [key: string]: number;
 }
 
-export default function GreetingSettings({ chatId }: { chatId: string }) {
+export default function ScheduleSettings({ chatId }: { chatId: string }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [enabled, setEnabled] = useState(false)
+  const [scheduleTime, setScheduleTime] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [fetchFailed, setFetchFailed] = useState(false)
@@ -56,7 +58,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
     }
   }, [])
 
-  const fetchGreetingSettings = useCallback(async () => {
+  const fetchScheduleSettings = useCallback(async () => {
     try {
       setIsLoading(true)
       
@@ -71,16 +73,17 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       }
 
       // Use the safe API call function with endpoint tracking
-      const data = await safeApiCall('getGreetingSettings', () => 
-        getGreetingSettings(tg.initData, parseInt(chatId), userId)
+      const data = await safeApiCall('getScheduleSettings', () => 
+        getScheduleSettings(tg.initData, parseInt(chatId), userId)
       )
       
-      console.log('Processed greeting settings:', data)
+      console.log('Processed schedule settings:', data)
       
       // Set the state with the retrieved settings
       if (data) {
         setMessage(data.message || '')
         setEnabled(data.enabled || false)
+        setScheduleTime(data.scheduleTime || '')
         // Reset retry count and fetch failed flag on success
         setRetryCount(0)
         setFetchFailed(false)
@@ -89,10 +92,11 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
         console.warn('Received empty data from API')
         setMessage('')
         setEnabled(false)
+        setScheduleTime('')
       }
     } catch (error) {
-      console.error('Error fetching greeting settings:', error)
-      setError(error instanceof Error ? error.message : 'Failed to fetch greeting settings')
+      console.error('Error fetching schedule settings:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch schedule settings')
       setFetchFailed(true)
     } finally {
       setIsLoading(false)
@@ -104,11 +108,11 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
     if (error && retryCount < 3 && !fetchFailed) {
       // Exponential backoff: 2s, 4s, 8s
       const backoffTime = Math.pow(2, retryCount + 1) * 1000
-      console.log(`Retrying greeting settings fetch (${retryCount + 1}/3) after ${backoffTime/1000}s...`)
+      console.log(`Retrying schedule settings fetch (${retryCount + 1}/3) after ${backoffTime/1000}s...`)
       
       const timer = setTimeout(() => {
         setRetryCount(prev => prev + 1)
-        fetchGreetingSettings().catch(() => {
+        fetchScheduleSettings().catch(() => {
           // Catch and ignore errors here to prevent unhandled rejections
           console.log('Retry attempt failed')
         })
@@ -116,17 +120,17 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       
       return () => clearTimeout(timer)
     }
-  }, [error, retryCount, fetchGreetingSettings, fetchFailed])
+  }, [error, retryCount, fetchScheduleSettings, fetchFailed])
 
-  // Initial fetch of greeting settings
+  // Initial fetch of schedule settings
   useEffect(() => {
-    fetchGreetingSettings().catch(() => {
+    fetchScheduleSettings().catch(() => {
       // Catch and ignore initial fetch errors to prevent unhandled rejections
       console.log('Initial fetch failed, will retry if configured')
     })
-  }, [fetchGreetingSettings])
+  }, [fetchScheduleSettings])
 
-  const handleToggleGreeting = async (newEnabledState: boolean) => {
+  const handleToggleSchedule = async (newEnabledState: boolean) => {
     try {
       setIsSubmitting(true)
       setError(null)
@@ -142,14 +146,14 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       }
 
       // Use the safe API call function with endpoint tracking
-      await safeApiCall('toggleGreeting', () => 
-        toggleGreeting(tg.initData, parseInt(chatId), userId, newEnabledState)
+      await safeApiCall('toggleSchedule', () => 
+        toggleSchedule(tg.initData, parseInt(chatId), userId, newEnabledState)
       )
       
       setEnabled(newEnabledState)
     } catch (error) {
-      console.error('Error toggling greeting:', error)
-      setError(error instanceof Error ? error.message : 'Failed to toggle greeting')
+      console.error('Error toggling schedule:', error)
+      setError(error instanceof Error ? error.message : 'Failed to toggle schedule')
     } finally {
       setIsSubmitting(false)
     }
@@ -171,14 +175,14 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       }
 
       // Use the safe API call function with endpoint tracking
-      await safeApiCall('setGreetingMessage', () => 
-        setGreetingMessage(tg.initData, parseInt(chatId), userId, message)
+      await safeApiCall('setScheduleMessage', () => 
+        setScheduleMessage(tg.initData, parseInt(chatId), userId, message, scheduleTime)
       )
       
       // No need to update local state as the message is already set
     } catch (error) {
-      console.error('Error saving greeting message:', error)
-      setError(error instanceof Error ? error.message : 'Failed to save greeting message')
+      console.error('Error saving schedule message:', error)
+      setError(error instanceof Error ? error.message : 'Failed to save schedule message')
     } finally {
       setIsSubmitting(false)
     }
@@ -198,8 +202,8 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
     return (
       <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}>
         <div className="p-6 border-b" style={{ borderColor: 'var(--tg-theme-hint-color, #4b5563)' }}>
-          <h2 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--tg-theme-text-color, white)' }}>Greeting Settings</h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>Manage your automated welcome messages</p>
+          <h2 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--tg-theme-text-color, white)' }}>Schedule Settings</h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>Manage your scheduled messages</p>
         </div>
 
         <div className="flex-1 overflow-auto p-6">
@@ -207,13 +211,13 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
             <p className="font-medium text-lg mb-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>Error Loading Settings</p>
             <p className="mb-4" style={{ color: 'var(--tg-theme-text-color, white)' }}>{error}</p>
             <p className="text-sm mb-4" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
-              You can still configure your greeting settings below. Default values have been provided.
+              You can still configure your schedule settings below. Default values have been provided.
             </p>
             <Button 
               onClick={() => {
                 setRetryCount(0);
                 setFetchFailed(false);
-                fetchGreetingSettings().catch(() => console.log('Manual retry failed'));
+                fetchScheduleSettings().catch(() => console.log('Manual retry failed'));
               }}
               style={{
                 backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
@@ -231,7 +235,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
             borderColor: 'var(--tg-theme-hint-color, #4b5563)'
           }}>
             <CardContent className="p-6">
-              {renderGreetingForm()}
+              {renderScheduleForm()}
             </CardContent>
           </Card>
 
@@ -254,13 +258,13 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
           className="text-2xl font-semibold tracking-tight"
           style={{ color: 'var(--tg-theme-text-color, white)' }}
         >
-          Greeting Settings
+          Schedule Settings
         </h2>
         <p 
           className="text-sm mt-1"
           style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
         >
-          Manage your automated welcome messages
+          Manage your scheduled messages
         </p>
       </div>
 
@@ -296,7 +300,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
           }}
         >
           <CardContent className="p-6">
-            {renderGreetingForm()}
+            {renderScheduleForm()}
           </CardContent>
         </Card>
 
@@ -305,20 +309,20 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
     </div>
   )
 
-  // Helper function to render the greeting form
-  function renderGreetingForm() {
+  // Helper function to render the schedule form
+  function renderScheduleForm() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Enable Welcome Message</Label>
+            <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Enable Scheduled Message</Label>
             <p className="text-sm mt-1" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
-              When enabled, the bot will automatically greet new members
+              When enabled, the bot will automatically send messages at the scheduled time
             </p>
           </div>
           <Switch 
             checked={enabled} 
-            onCheckedChange={handleToggleGreeting}
+            onCheckedChange={handleToggleSchedule}
             disabled={isSubmitting}
             style={{
               backgroundColor: enabled ? 'var(--tg-theme-button-color, #3b82f6)' : 'var(--tg-theme-hint-color, #4b5563)'
@@ -327,14 +331,34 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
         </div>
 
         <div className="space-y-2">
-          <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Greeting Message</Label>
+          <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Schedule Time</Label>
           <p className="text-sm mb-2" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
-            This message will be sent to new members when they join
+            Set the time when the message should be sent (24-hour format)
+          </p>
+          <input
+            type="time"
+            value={scheduleTime}
+            onChange={(e) => setScheduleTime(e.target.value)}
+            className="w-full p-2 rounded border"
+            style={{
+              backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
+            disabled={isSubmitting}
+            title="Schedule time in 24-hour format"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label style={{ color: 'var(--tg-theme-text-color, white)' }} className="text-lg">Scheduled Message</Label>
+          <p className="text-sm mb-2" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
+            This message will be sent at the scheduled time
           </p>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Enter your greeting message here..."
+            placeholder="Enter your scheduled message here..."
             style={{
               backgroundColor: 'var(--tg-theme-secondary-bg-color, #374151)',
               borderColor: 'var(--tg-theme-hint-color, #4b5563)',
@@ -347,7 +371,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
 
         <Button 
           onClick={handleSaveMessage} 
-          disabled={isSubmitting || !message.trim()}
+          disabled={isSubmitting || !message.trim() || !scheduleTime}
           style={{
             backgroundColor: 'var(--tg-theme-button-color, #3b82f6)',
             color: 'var(--tg-theme-button-text-color, white)'
@@ -357,7 +381,7 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : null}
-          Save Greeting Message
+          Save Schedule Settings
         </Button>
       </div>
     )
@@ -372,31 +396,31 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
           borderColor: 'var(--tg-theme-hint-color, #4b5563)'
         }} className="backdrop-blur-sm">
           <CardContent className="p-6">
-            <h3 className="text-xl font-medium mb-4" style={{ color: 'var(--tg-theme-text-color, white)' }}>Tips for effective greeting messages</h3>
+            <h3 className="text-xl font-medium mb-4" style={{ color: 'var(--tg-theme-text-color, white)' }}>Tips for effective scheduled messages</h3>
             <ul className="space-y-2">
               <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
                 <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
-                Welcome new members warmly and make them feel included
+                Schedule important announcements or reminders
               </li>
               <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
                 <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
-                Introduce the purpose of your group or channel
+                Set regular updates or daily messages
               </li>
               <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
                 <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
-                Share important rules or guidelines
+                Use scheduled messages for time-sensitive content
               </li>
               <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
                 <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
-                Include helpful resources for newcomers
+                Plan ahead for special events or announcements
               </li>
               <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
                 <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
-                Keep it concise but informative
+                Keep messages concise and clear
               </li>
               <li className="flex items-start gap-2" style={{ color: 'var(--tg-theme-text-color, white)' }}>
                 <span style={{ color: 'var(--tg-theme-link-color, #3b82f6)' }} className="font-bold">•</span>
-                Use <code style={{ color: 'var(--tg-theme-text-color, white)' }}>{'{username}'}</code> to mention the new member
+                Use <code style={{ color: 'var(--tg-theme-text-color, white)' }}>{'{username}'}</code> to mention specific users
               </li>
             </ul>
           </CardContent>
