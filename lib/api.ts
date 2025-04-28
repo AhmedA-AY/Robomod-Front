@@ -1,4 +1,4 @@
-import type { GamificationSettings, Badge, Challenge, Reward } from '@/types/gamification'
+import type { GamificationSettings } from '@/types/gamification'
 
 export async function getModeratorChat(initDataString: string, moderatorUserId: number) {
   try {
