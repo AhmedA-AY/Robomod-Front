@@ -277,33 +277,39 @@ export async function setGoodbyeMessage(initDataString: string, chatId: number, 
 }
 
 interface GamificationSettings {
+  enabled: boolean;
   point_allocations: {
-    [key: string]: number;
+    new_message: number;
+    reply_message: number;
+    react_message: number;
+    unreact_message: number;
+    helpful_answer: number;
+    share_resource: number;
+    create_poll: number;
+    welcome_member: number;
+    report_issue: number;
+    bad_behavior: number;
+    warning_received: number;
   };
   level_settings: {
-    levels_enabled: boolean;
-    level_list: Array<{
-      level: number;
-      points_required: number;
-    }>;
+    level_multiplier: number;
+    base_points_per_level: number;
+  };
+  badge_settings: {
+    badges_enabled: boolean;
+    badge_list: any[];
+  };
+  leaderboard_settings: {
+    leaderboard_types: string[];
+    reset_times: Record<string, string>;
   };
   challenge_settings: {
     challenges_enabled: boolean;
-    challenge_list: Array<{
-      id: number;
-      name: string;
-      description: string;
-      points: number;
-    }>;
+    challenge_list: any[];
   };
   reward_settings: {
     rewards_enabled: boolean;
-    reward_list: Array<{
-      id: number;
-      name: string;
-      description: string;
-      points_cost: number;
-    }>;
+    reward_list: any[];
   };
 }
 

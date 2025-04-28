@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import * as React from "react"
 import { Label } from "@/components/ui/label"
+import { getGreetingSettings, toggleGreeting, setGreetingMessage } from '@/lib/api'
 
 interface GreetingSettings {
   enabled: boolean;
@@ -32,19 +33,16 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
   const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
   // Helper function to ensure rate limiting compliance
-  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<Response>): Promise<Response> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<GreetingSettings>): Promise<GreetingSettings> => {
     const now = Date.now()
     const lastCallTime = lastApiCallsRef.current[endpoint] || 0
     const timeSinceLastCall = now - lastCallTime
     
-    // Ensure at least 1100ms between API calls to the same endpoint (adding 100ms buffer)
     if (timeSinceLastCall < 1100) {
       const waitTime = 1100 - timeSinceLastCall
-      console.log(`Rate limiting for ${endpoint}: waiting ${waitTime}ms before API call`)
       await new Promise(resolve => setTimeout(resolve, waitTime))
     }
     
-    // Update the timestamp for this endpoint
     lastApiCallsRef.current[endpoint] = Date.now()
     
     try {
@@ -63,100 +61,22 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
-
-      // Use URLSearchParams to properly format query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
       
-      const endpoint = '/api/greeting'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Fetching greeting settings with URL:', urlString)
-
-      // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        }
-      }))
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error fetching greeting settings:', errorText)
-        let errorMessage = 'Failed to fetch greeting settings'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
       }
 
-      // Get the response as text first to check for malformed JSON
-      const responseText = await response.text()
-      console.log('Raw greeting settings response:', responseText)
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'greeting_settings';
+
+      const data = await safeApiCall(endpoint, () => 
+        getGreetingSettings(tg.initData, parseInt(chatId), userId)
+      );
       
-      let data: GreetingSettings | null = null
-      
-      if (!responseText || responseText.trim() === '') {
-        console.warn('Empty response from API, using default values')
-        data = { enabled: false, message: '' }
-      } else {
-        try {
-          // Try to parse the response as JSON
-          data = JSON.parse(responseText)
-        } catch (parseError) {
-          console.error('Error parsing JSON response:', parseError)
-          console.warn('Attempting to fix malformed JSON response')
-          
-          // Basic fix for known malformed response format
-          let enabled = false
-          let message = ''
-          
-          try {
-            // Try to extract "enabled" value
-            const enabledMatch = responseText.match(/"enabled"\s*:\s*(true|false)/)
-            if (enabledMatch && enabledMatch[1]) {
-              enabled = enabledMatch[1] === 'true'
-            }
-            
-            // Try to extract message
-            const messageMatch = responseText.match(/"message(?:_id)?"\s*:\s*"([^"]*)"/)
-            if (messageMatch && messageMatch[1]) {
-              message = messageMatch[1]
-            }
-            
-            // Create a valid data object
-            data = { enabled, message }
-            console.log('Extracted data from malformed JSON:', data)
-          } catch (extractError) {
-            console.error('Failed to extract data from malformed JSON:', extractError)
-            // Fallback to default values
-            data = { enabled: false, message: '' }
-          }
-        }
-      }
-      
-      console.log('Processed greeting settings:', data)
-      
-      // Set the state with the retrieved settings
-      if (data) {
-        setMessage(data.message || '')
-        setEnabled(data.enabled || false)
-        // Reset retry count and fetch failed flag on success
-        setRetryCount(0)
-        setFetchFailed(false)
-      } else {
-        // Handle empty response
-        console.warn('Received empty data from API')
-        setMessage('')
-        setEnabled(false)
-      }
+      setMessage(data.message || '');
+      setEnabled(data.enabled || false);
+      setRetryCount(0);
+      setFetchFailed(false);
     } catch (error) {
       console.error('Error fetching greeting settings:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch greeting settings')
@@ -202,56 +122,19 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
-
-      // Use URLSearchParams to properly format query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
-      params.append('enabled', newEnabledState.toString())
       
-      const endpoint = '/api/toggle_greeting'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Toggling greeting with URL:', urlString)
-      console.log('Request details:', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => {
-        console.log('Making API call to:', urlString)
-        return fetch(urlString, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tg.initData}`,
-            'Content-Type': 'application/json',
-          },
-        })
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error toggling greeting:', errorText)
-        let errorMessage = 'Failed to toggle greeting'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
       }
 
-      // Update local state after successful API call
-      setEnabled(newEnabledState)
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'toggle_greeting';
+
+      await safeApiCall(endpoint, () => 
+        toggleGreeting(tg.initData, parseInt(chatId), userId, newEnabledState)
+      );
       
-      // Show success notification or feedback to the user
-      console.log('Greeting toggled successfully')
+      setEnabled(newEnabledState);
     } catch (error) {
       console.error('Error toggling greeting:', error)
       setError(error instanceof Error ? error.message : 'Failed to toggle greeting')
@@ -269,51 +152,23 @@ export default function GreetingSettings({ chatId }: { chatId: string }) {
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
+      
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
+      }
 
-      // Validate message
       if (!message.trim()) {
         throw new Error('Greeting message cannot be empty')
       }
 
-      // Use URLSearchParams to properly format query parameters
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
-      params.append('message', message.trim())
-      
-      const endpoint = '/api/set_greeting_message'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-      console.log('Saving greeting message with URL:', urlString)
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'set_greeting_message';
 
-      // Use the safe API call function with endpoint tracking
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        },
-      }))
+      await safeApiCall(endpoint, () => 
+        setGreetingMessage(tg.initData, parseInt(chatId), userId, message.trim())
+      );
       
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error saving greeting message:', errorText)
-        let errorMessage = 'Failed to save greeting message'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || errorData?.error || `${response.status} ${response.statusText}`
-        } catch {
-          // If JSON parsing fails, use the error text
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
-      }
-      
-      // Update the local state
-      setMessage(message.trim())
-      
-      // Show success notification or feedback to the user
-      console.log('Greeting message saved successfully')
+      setMessage(message.trim());
     } catch (error) {
       console.error('Error saving greeting message:', error)
       setError(error instanceof Error ? error.message : 'Failed to save greeting message')

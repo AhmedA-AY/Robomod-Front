@@ -32,23 +32,25 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
       create_poll: 7,
       welcome_member: 8,
       report_issue: 7,
-      bad_behavior: -50
+      bad_behavior: -50,
+      warning_received: -25
     },
     level_settings: {
-      levels_enabled: true,
-      level_list: [
-        { level: 1, points_required: 100 },
-        { level: 2, points_required: 250 },
-        { level: 3, points_required: 500 }
-      ]
+      level_multiplier: 1.5,
+      base_points_per_level: 100
     },
     badge_settings: {
       badges_enabled: false,
       badge_list: []
     },
     leaderboard_settings: {
-      leaderboard_types: [],
-      reset_times: {}
+      leaderboard_types: ['all_time', 'daily', 'weekly', 'monthly', 'yearly'],
+      reset_times: {
+        daily: '00:00',
+        weekly: 'Monday 00:00',
+        monthly: '00:00',
+        yearly: '00:00'
+      }
     },
     challenge_settings: {
       challenges_enabled: false,
@@ -171,28 +173,11 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
   }
 
   const handleLevelSettingChange = (key: keyof LevelSettings, value: string) => {
-    if (key === 'levels_enabled') {
-      setSettings(prev => ({
-        ...prev,
-        level_settings: {
-          ...prev.level_settings,
-          levels_enabled: value === 'true'
-        }
-      }))
-    }
-  }
-
-  const handleLevelListChange = (index: number, field: 'level' | 'points_required', value: string) => {
     setSettings(prev => ({
       ...prev,
       level_settings: {
         ...prev.level_settings,
-        level_list: prev.level_settings.level_list.map((level, i) => 
-          i === index ? {
-            ...level,
-            [field]: field === 'level' ? parseInt(value) : parseInt(value)
-          } : level
-        )
+        [key]: parseFloat(value) || 0
       }
     }))
   }
@@ -228,6 +213,71 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function renderLevelSettings() {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label 
+              className="text-lg"
+              style={{ color: 'var(--tg-theme-text-color, white)' }}
+            >
+              Level Multiplier
+            </Label>
+            <p 
+              className="text-sm mt-1"
+              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+            >
+              Points required for each level will be multiplied by this value
+            </p>
+          </div>
+          <Input
+            type="number"
+            value={settings.level_settings.level_multiplier}
+            onChange={(e) => handleLevelSettingChange('level_multiplier', e.target.value)}
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
+            className="w-24"
+            step="0.1"
+            min="1"
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label 
+              className="text-lg"
+              style={{ color: 'var(--tg-theme-text-color, white)' }}
+            >
+              Base Points per Level
+            </Label>
+            <p 
+              className="text-sm mt-1"
+              style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}
+            >
+              Base points required to reach each level
+            </p>
+          </div>
+          <Input
+            type="number"
+            value={settings.level_settings.base_points_per_level}
+            onChange={(e) => handleLevelSettingChange('base_points_per_level', e.target.value)}
+            style={{
+              backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
+              borderColor: 'var(--tg-theme-hint-color, #4b5563)',
+              color: 'var(--tg-theme-text-color, white)'
+            }}
+            className="w-24"
+            min="1"
+          />
+        </div>
+      </div>
+    )
   }
 
   if (isLoading && retryCount === 0 && !fetchFailed) {
@@ -387,63 +437,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                 >
                   Level Settings
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label 
-                        className="text-sm"
-                        style={{ color: 'var(--tg-theme-text-color, white)' }}
-                      >
-                        Enable Levels
-                      </Label>
-                    </div>
-                    <Switch
-                      checked={settings.level_settings.levels_enabled}
-                      onCheckedChange={(checked) => handleLevelSettingChange('levels_enabled', checked.toString())}
-                    />
-                  </div>
-                  
-                  {settings.level_settings.level_list.map((level, index) => (
-                    <div key={index} className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label 
-                          className="text-sm"
-                          style={{ color: 'var(--tg-theme-text-color, white)' }}
-                        >
-                          Level {index + 1}
-                        </Label>
-                        <Input
-                          type="number"
-                          value={level.level}
-                          onChange={(e) => handleLevelListChange(index, 'level', e.target.value)}
-                          style={{
-                            backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
-                            borderColor: 'var(--tg-theme-hint-color, #4b5563)',
-                            color: 'var(--tg-theme-text-color, white)'
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label 
-                          className="text-sm"
-                          style={{ color: 'var(--tg-theme-text-color, white)' }}
-                        >
-                          Points Required
-                        </Label>
-                        <Input
-                          type="number"
-                          value={level.points_required}
-                          onChange={(e) => handleLevelListChange(index, 'points_required', e.target.value)}
-                          style={{
-                            backgroundColor: 'var(--tg-theme-bg-color, #1f2937)',
-                            borderColor: 'var(--tg-theme-hint-color, #4b5563)',
-                            color: 'var(--tg-theme-text-color, white)'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {renderLevelSettings()}
               </div>
 
               {/* Save Button */}

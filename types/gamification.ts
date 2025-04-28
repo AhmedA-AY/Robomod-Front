@@ -10,14 +10,12 @@ export interface PointAllocations {
   welcome_member: number;
   report_issue: number;
   bad_behavior: number;
+  warning_received: number;
 }
 
 export interface LevelSettings {
-  levels_enabled: boolean;
-  level_list: Array<{
-    level: number;
-    points_required: number;
-  }>;
+  level_multiplier: number;
+  base_points_per_level: number;
 }
 
 export interface BadgeSettings {
