@@ -1,4 +1,5 @@
 export interface PointAllocations {
+  [key: string]: number;
   new_message: number;
   reply_message: number;
   react_message: number;

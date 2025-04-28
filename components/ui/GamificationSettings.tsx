@@ -7,42 +7,11 @@ import { Loader2 } from 'lucide-react'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import type { GamificationSettings as GamificationSettingsType, PointAllocations, LevelSettings, BadgeSettings, LeaderboardSettings, ChallengeSettings, RewardSettings } from '@/types/gamification'
+import type { GamificationSettings as GamificationSettingsType, PointAllocations, LevelSettings } from '@/types/gamification'
 import { getGamificationSettings, updateGamificationSettings } from '@/lib/api'
 
 interface EndpointTimestamps {
   [key: string]: number;
-}
-
-interface GamificationSettingsResponse {
-  point_allocations: {
-    [key: string]: number;
-  };
-  level_settings: {
-    levels_enabled: boolean;
-    level_list: Array<{
-      level: number;
-      points_required: number;
-    }>;
-  };
-  challenge_settings: {
-    challenges_enabled: boolean;
-    challenge_list: Array<{
-      id: number;
-      name: string;
-      description: string;
-      points: number;
-    }>;
-  };
-  reward_settings: {
-    rewards_enabled: boolean;
-    reward_list: Array<{
-      id: number;
-      name: string;
-      description: string;
-      points_cost: number;
-    }>;
-  };
 }
 
 export default function GamificationSettings({ chatId }: { chatId: string }) {
@@ -437,67 +406,6 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
                   </div>
                 </div>
               </div>
-
-              {/* Feature Toggles */}
-              {/* <div className="space-y-4">
-                <h3 
-                  className="text-lg font-semibold"
-                  style={{ color: 'var(--tg-theme-text-color, white)' }}
-                >
-                  Feature Toggles
-                </h3>
-                
-                Badges Section - Commented out
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Badges</p>
-                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
-                        Enable badge system for achievements
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.badges.enabled}
-                      onCheckedChange={(checked) => handleSettingsChange('badges', { ...settings.badges, enabled: checked })}
-                    />
-                  </div>
-                </div>
-               
-
-                Challenges Section - Commented out
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Challenges</p>
-                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
-                        Enable daily and weekly challenges
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.challenges.enabled}
-                      onCheckedChange={(checked) => handleSettingsChange('challenges', { ...settings.challenges, enabled: checked })}
-                    />
-                  </div>
-                </div>
-               
-
-                Rewards Section - Commented out
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p style={{ color: 'var(--tg-theme-text-color, white)' }}>Rewards</p>
-                      <p className="text-sm" style={{ color: 'var(--tg-theme-hint-color, #a0aec0)' }}>
-                        Enable reward system for points
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.rewards.enabled}
-                      onCheckedChange={(checked) => handleSettingsChange('rewards', { ...settings.rewards, enabled: checked })}
-                    />
-                  </div>
-                </div>
-               
-              </div> */}
 
               {/* Save Button */}
               <Button
