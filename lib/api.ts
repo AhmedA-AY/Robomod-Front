@@ -256,15 +256,13 @@ export async function toggleGoodbye(initDataString: string, chatId: number, user
 
 export async function setGoodbyeMessage(initDataString: string, chatId: number, userId: number, message: string) {
   try {
-    const formData = new FormData();
-    formData.append('message', message);
-    
     const response = await fetch(`https://robomod.dablietech.club/api/chats/${chatId}/goodbye/message?user_id=${userId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${initDataString}`,
+        'Content-Type': 'application/json',
       },
-      body: formData,
+      body: JSON.stringify({ message }),
     });
     
     if (!response.ok) {

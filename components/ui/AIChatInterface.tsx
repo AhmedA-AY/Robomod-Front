@@ -78,17 +78,7 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
     <div
       className="h-full flex flex-col"
       style={{ backgroundColor: 'var(--tg-theme-bg-color, #1f2937)' }}
-    >
-      {/* Chat header */}
-      <div className="border-b border-border p-3 flex items-center justify-between bg-card/50">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary/10 rounded-full">
-            <MessageSquare className="h-5 w-5 text-primary" />
-          </div>
-          <h3 className="font-medium">Robo Assistant</h3>
-        </div>
-      </div>
-      
+    > 
       {/* Message History Area */}
       <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {history.map((msg, index) => (
