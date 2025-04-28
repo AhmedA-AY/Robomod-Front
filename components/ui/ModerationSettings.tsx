@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { getModerationSettings, updateModerationSettings } from '@/lib/api'
+import type { ModerationSettings as ModerationSettingsType } from '@/types/moderation'
 
 interface ModerationSettings {
   warning_system_enabled: boolean;
@@ -56,7 +57,7 @@ export default function ModerationSettings({ chatId }: { chatId: string }) {
 
   const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
-  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<any>): Promise<any> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<ModerationSettingsType>): Promise<ModerationSettingsType> => {
     const now = Date.now()
     const lastCallTime = lastApiCallsRef.current[endpoint] || 0
     const timeSinceLastCall = now - lastCallTime

@@ -276,6 +276,52 @@ export async function setGoodbyeMessage(initDataString: string, chatId: number, 
   }
 }
 
+interface GamificationSettings {
+  point_allocations: {
+    [key: string]: number;
+  };
+  level_settings: {
+    levels_enabled: boolean;
+    level_list: Array<{
+      level: number;
+      points_required: number;
+    }>;
+  };
+  challenge_settings: {
+    challenges_enabled: boolean;
+    challenge_list: Array<{
+      id: number;
+      name: string;
+      description: string;
+      points: number;
+    }>;
+  };
+  reward_settings: {
+    rewards_enabled: boolean;
+    reward_list: Array<{
+      id: number;
+      name: string;
+      description: string;
+      points_cost: number;
+    }>;
+  };
+}
+
+interface ModerationSettings {
+  warning_system_enabled: boolean;
+  max_warnings: number;
+  warning_action: string;
+  warning_mute_duration: number;
+  filters_enabled: boolean;
+  forbidden_words: string[];
+  forbidden_links: string[];
+  anti_flood_enabled: boolean;
+  flood_message_limit: number;
+  flood_time_limit: number;
+  flood_action: string;
+  flood_restrict_duration: number;
+}
+
 export async function getGamificationSettings(initDataString: string, chatId: number, userId: number) {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/chats/${chatId}/gamification/settings?user_id=${userId}`, {
@@ -296,7 +342,7 @@ export async function getGamificationSettings(initDataString: string, chatId: nu
   }
 }
 
-export async function updateGamificationSettings(initDataString: string, chatId: number, userId: number, settings: any) {
+export async function updateGamificationSettings(initDataString: string, chatId: number, userId: number, settings: GamificationSettings) {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/chats/${chatId}/gamification/settings?user_id=${userId}`, {
       method: 'POST',
@@ -338,7 +384,7 @@ export async function getModerationSettings(initDataString: string, chatId: numb
   }
 }
 
-export async function updateModerationSettings(initDataString: string, chatId: number, userId: number, settings: any) {
+export async function updateModerationSettings(initDataString: string, chatId: number, userId: number, settings: ModerationSettings) {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/chats/${chatId}/moderation/settings?user_id=${userId}`, {
       method: 'POST',

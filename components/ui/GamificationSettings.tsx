@@ -7,11 +7,42 @@ import { Loader2 } from 'lucide-react'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import type { GamificationSettings, PointAllocations, LevelSettings } from '@/types/gamification'
+import type { GamificationSettings as GamificationSettingsType, PointAllocations, LevelSettings, BadgeSettings, LeaderboardSettings, ChallengeSettings, RewardSettings } from '@/types/gamification'
 import { getGamificationSettings, updateGamificationSettings } from '@/lib/api'
 
 interface EndpointTimestamps {
   [key: string]: number;
+}
+
+interface GamificationSettingsResponse {
+  point_allocations: {
+    [key: string]: number;
+  };
+  level_settings: {
+    levels_enabled: boolean;
+    level_list: Array<{
+      level: number;
+      points_required: number;
+    }>;
+  };
+  challenge_settings: {
+    challenges_enabled: boolean;
+    challenge_list: Array<{
+      id: number;
+      name: string;
+      description: string;
+      points: number;
+    }>;
+  };
+  reward_settings: {
+    rewards_enabled: boolean;
+    reward_list: Array<{
+      id: number;
+      name: string;
+      description: string;
+      points_cost: number;
+    }>;
+  };
 }
 
 export default function GamificationSettings({ chatId }: { chatId: string }) {
@@ -20,7 +51,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [fetchFailed, setFetchFailed] = useState(false)
-  const [settings, setSettings] = useState<GamificationSettings>({
+  const [settings, setSettings] = useState<GamificationSettingsType>({
     enabled: true,
     point_allocations: {
       new_message: 3,
@@ -58,7 +89,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
 
   const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
-  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<any>): Promise<any> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<GamificationSettingsType>): Promise<GamificationSettingsType> => {
     const now = Date.now()
     const lastCallTime = lastApiCallsRef.current[endpoint] || 0
     const timeSinceLastCall = now - lastCallTime
