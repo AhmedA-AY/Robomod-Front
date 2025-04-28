@@ -75,7 +75,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             console.log('Received chats:', chatsData);
             
             // Transform the response to match our Chat type
-            const transformedChats = chatsData.map((chat: any) => ({
+            const transformedChats = chatsData.map((chat: { chat_id: number; name: string; type: string }) => ({
               id: chat.chat_id,
               title: chat.name,
               type: chat.type.toLowerCase()

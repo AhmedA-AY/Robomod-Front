@@ -32,7 +32,7 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
   const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
   // Helper function to ensure rate limiting compliance
-  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<any>): Promise<any> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<{ message: string; enabled: boolean }>): Promise<{ message: string; enabled: boolean }> => {
     const now = Date.now()
     const lastCallTime = lastApiCallsRef.current[endpoint] || 0
     const timeSinceLastCall = now - lastCallTime
