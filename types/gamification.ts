@@ -13,8 +13,11 @@ export interface PointAllocations {
 }
 
 export interface LevelSettings {
-  level_multiplier: number;
-  base_points_per_level: number;
+  levels_enabled: boolean;
+  level_list: Array<{
+    level: number;
+    points_required: number;
+  }>;
 }
 
 export interface BadgeSettings {
