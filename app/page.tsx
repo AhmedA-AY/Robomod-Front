@@ -3,12 +3,11 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
-import { MessageCircle, MessageSquare, Menu, HelpCircle, Trophy } from 'lucide-react'
+import { MessageCircle, MessageSquare, Menu, HelpCircle, Trophy, Shield } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import GamificationSettings from '@/components/ui/GamificationSettings'
-import ScheduleSettings from '@/components/ui/ScheduleSettings'
 
 interface Chat {
   id: number;
@@ -47,6 +46,10 @@ const AIChatInterface = dynamic(() => import('@/components/ui/AIChatInterface'),
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
+const ScheduledMessages = dynamic(() => import('@/components/ui/ScheduledMessages'), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
+})
 const FaqSettings = dynamic(() => import('@/components/ui/FaqSettings'), { 
   ssr: false, 
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
@@ -56,6 +59,10 @@ const GreetingSettings = dynamic(() => import('@/components/ui/GreetingSettings'
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
 const GoodbyeSettings = dynamic(() => import('@/components/ui/GoodbyeSettings'), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
+})
+const ModerationSettings = dynamic(() => import('@/components/ui/ModerationSettings'), { 
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin" /></div>
 })
@@ -78,6 +85,7 @@ export default function Home() {
     { id: 'greeting', label: 'Greeting', icon: <MessageCircle className="w-5 h-5" />, color: 'text-purple-500' },
     { id: 'goodbye', label: 'Goodbye', icon: <MessageSquare className="w-5 h-5" />, color: 'text-pink-500' },
     { id: 'gamification', label: 'Gamification', icon: <Trophy className="w-5 h-5" />, color: 'text-yellow-500' },
+    { id: 'moderation', label: 'Moderation', icon: <Shield className="w-5 h-5" />, color: 'text-red-500' },
   ]
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
@@ -186,13 +194,15 @@ export default function Home() {
             className="flex-1 overflow-hidden"
           >
             {activeTab === 'ai' && <AIChatInterface chatId={selectedChat.id.toString()} />}
-            {activeTab === 'scheduled' && <ScheduleSettings chatId={selectedChat.id.toString()} />}
+            {activeTab === 'scheduled' && <ScheduledMessages chatId={selectedChat.id.toString()} />}
             {activeTab === 'faq' && <FaqSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'greeting' && <GreetingSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'goodbye' && <GoodbyeSettings chatId={selectedChat.id.toString()} />}
             {activeTab === 'gamification' && <GamificationSettings chatId={selectedChat.id.toString()} />}
+            {activeTab === 'moderation' && <ModerationSettings chatId={selectedChat.id.toString()} />}
             {activeTab !== 'ai' && activeTab !== 'scheduled' && activeTab !== 'faq' && 
-             activeTab !== 'greeting' && activeTab !== 'goodbye' && activeTab !== 'gamification' && (
+             activeTab !== 'greeting' && activeTab !== 'goodbye' && activeTab !== 'gamification' && 
+             activeTab !== 'moderation' && (
               <div className="h-full flex items-center justify-center p-4">
                 <div className="text-foreground/80 bg-card/30 rounded-xl p-8 max-w-4xl border border-border">
                   <div className="flex flex-col items-center justify-center text-center gap-4">

@@ -61,23 +61,28 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       setError(null)
       
       const tg = window?.Telegram?.WebApp
-      if (!tg?.initData || !tg?.initDataUnsafe?.user?.id) {
-        console.error('Telegram Web App not initialized or user not authenticated')
-        setError('Telegram Web App is not initialized or user not authenticated')
+      if (!tg || !tg.initData) {
+        console.error('Telegram Web App not initialized')
+        setError('Telegram Web App is not initialized')
+        setFetchFailed(true)
+        return
+      }
+      
+      if (!tg.initDataUnsafe.user?.id) {
+        console.error('User ID not available')
+        setError('User ID not available')
         setFetchFailed(true)
         return
       }
 
-      const userId = tg.initDataUnsafe.user.id
-      if (!userId) {
-        throw new Error('User ID is not available')
-      }
-
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'faq_settings'
+      
       try {
         // Use the safe API call function with endpoint tracking
-        const data = await safeApiCall('getFaqSettings', () => 
+        const data = await safeApiCall(endpoint, () => 
           getFaqSettings(tg.initData, parseInt(chatId), userId)
-        )
+        );
         
         console.log('Processed FAQ settings:', data)
         
@@ -148,21 +153,26 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       setError(null)
       
       const tg = window?.Telegram?.WebApp
-      if (!tg?.initData || !tg?.initDataUnsafe?.user?.id) {
-        throw new Error('Telegram Web App is not initialized or user not authenticated')
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized')
       }
-
-      const userId = tg.initDataUnsafe.user.id
-      if (!userId) {
-        throw new Error('User ID is not available')
-      }
-
-      // Use the safe API call function with endpoint tracking
-      await safeApiCall('toggleFaq', () => 
-        toggleFaq(tg.initData, parseInt(chatId), userId, newEnabledState)
-      )
       
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
+      }
+
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'toggle_faq'
+      
+      // Use the safe API call function with endpoint tracking
+      await safeApiCall(endpoint, () => 
+        toggleFaq(tg.initData, parseInt(chatId), userId, newEnabledState)
+      );
+      
+      // Update local state if the API call succeeded
       setEnabled(newEnabledState)
+      console.log(`FAQ has been ${newEnabledState ? 'enabled' : 'disabled'}`)
+      
     } catch (error) {
       console.error('Error toggling FAQ:', error)
       setError(error instanceof Error ? error.message : 'Failed to toggle FAQ')
@@ -177,21 +187,24 @@ export default function FaqSettings({ chatId }: { chatId: string }) {
       setError(null)
       
       const tg = window?.Telegram?.WebApp
-      if (!tg?.initData || !tg?.initDataUnsafe?.user?.id) {
-        throw new Error('Telegram Web App is not initialized or user not authenticated')
+      if (!tg || !tg.initData) {
+        throw new Error('Telegram Web App is not initialized')
       }
-
-      const userId = tg.initDataUnsafe.user.id
-      if (!userId) {
-        throw new Error('User ID is not available')
-      }
-
-      // Use the safe API call function with endpoint tracking
-      await safeApiCall('setFaqMessage', () => 
-        setFaqMessage(tg.initData, parseInt(chatId), userId, message)
-      )
       
-      // No need to update local state as the message is already set
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
+      }
+
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'set_faq_message'
+      
+      // Use the safe API call function with endpoint tracking
+      await safeApiCall(endpoint, () => 
+        setFaqMessage(tg.initData, parseInt(chatId), userId, message)
+      );
+      
+      console.log('FAQ message has been updated')
+      
     } catch (error) {
       console.error('Error saving FAQ message:', error)
       setError(error instanceof Error ? error.message : 'Failed to save FAQ message')

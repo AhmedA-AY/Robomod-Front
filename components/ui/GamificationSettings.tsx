@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import type { GamificationSettings, PointAllocations, LevelSettings } from '@/types/gamification'
+import { getGamificationSettings, updateGamificationSettings } from '@/lib/api'
 
 interface EndpointTimestamps {
   [key: string]: number;
@@ -57,7 +58,7 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
 
   const lastApiCallsRef = useRef<EndpointTimestamps>({})
 
-  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<Response>): Promise<Response> => {
+  const safeApiCall = useCallback(async (endpoint: string, apiCall: () => Promise<any>): Promise<any> => {
     const now = Date.now()
     const lastCallTime = lastApiCallsRef.current[endpoint] || 0
     const timeSinceLastCall = now - lastCallTime
@@ -85,36 +86,18 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
-
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
       
-      const endpoint = '/api/gamification/settings'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        }
-      }))
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        let errorMessage = 'Failed to fetch gamification settings'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
-        } catch {
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
       }
 
-      const data = await response.json()
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'gamification_settings';
+
+      const data = await safeApiCall(endpoint, () => 
+        getGamificationSettings(tg.initData, parseInt(chatId), userId)
+      );
+      
       setSettings(data)
       setRetryCount(0)
       setFetchFailed(false)
@@ -152,35 +135,17 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
-
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
       
-      const endpoint = '/api/gamification/settings'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings)
-      }))
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        let errorMessage = 'Failed to save gamification settings'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
-        } catch {
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
       }
+
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'update_gamification_settings';
+
+      await safeApiCall(endpoint, () => 
+        updateGamificationSettings(tg.initData, parseInt(chatId), userId, settings)
+      );
       
       console.log('Gamification settings saved successfully')
     } catch (error) {
@@ -220,40 +185,24 @@ export default function GamificationSettings({ chatId }: { chatId: string }) {
       if (!tg || !tg.initData) {
         throw new Error('Telegram Web App is not initialized')
       }
-
-      const params = new URLSearchParams()
-      params.append('chat_id', chatId)
       
-      const endpoint = '/api/gamification/settings'
-      const urlString = `https://robomod.dablietech.club${endpoint}?${params.toString()}`
-
-      const response = await safeApiCall(endpoint, () => fetch(urlString, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tg.initData}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...settings, enabled })
-      }))
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        let errorMessage = 'Failed to update gamification settings'
-        
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData?.message || errorData?.detail || `${response.status} ${response.statusText}`
-        } catch {
-          errorMessage = errorText || `${response.status} ${response.statusText}`
-        }
-        
-        throw new Error(errorMessage)
+      if (!tg.initDataUnsafe.user?.id) {
+        throw new Error('User ID not available')
       }
+
+      const userId = tg.initDataUnsafe.user.id;
+      const endpoint = 'toggle_gamification';
+
+      const updatedSettings = { ...settings, enabled };
       
-      setSettings(prev => ({ ...prev, enabled }))
-      console.log('Gamification settings updated successfully')
+      await safeApiCall(endpoint, () => 
+        updateGamificationSettings(tg.initData, parseInt(chatId), userId, updatedSettings)
+      );
+      
+      setSettings(updatedSettings);
+      console.log(`Gamification has been ${enabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
-      console.error('Error updating gamification settings:', error)
+      console.error('Error toggling gamification:', error)
       setError(error instanceof Error ? error.message : 'Failed to update gamification settings')
     } finally {
       setIsSubmitting(false)

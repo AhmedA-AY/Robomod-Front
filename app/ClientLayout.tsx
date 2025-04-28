@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getModeratorChat } from '@/lib/api'
+import { getChatsModeratedByUser, getCurrentUserInfo } from '@/lib/api'
 import { UserCircle2, Group, Loader2 } from 'lucide-react'
 import { useChatContext } from './page'
 import { motion } from 'framer-motion'
@@ -10,15 +10,6 @@ interface Chat {
   id: number;
   title: string;
   type: string;
-}
-
-interface ModeratorChatResponse {
-  chats: Array<{
-    moderation_id: string;
-    chat_id: number;
-    name: string;
-    type: string;
-  }>;
 }
 
 interface TelegramWebApp {
@@ -65,42 +56,41 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         tg.ready()
         const initData = tg.initData
         console.log('InitData:', initData)
-        console.log('InitDataUnsafe:', tg.initDataUnsafe)
         
-        if (!initData || !tg.initDataUnsafe.user?.id) {
-          console.log('No init data or user found')
+        if (!initData) {
+          console.log('No init data found')
           setError('Missing initialization data')
           setIsLoading(false)
           return
         }
         
-        async function loadChats() {
+        async function loadUserAndChats() {
           try {
-            if (tg && tg.initDataUnsafe.user?.id) {
-              const userId = tg.initDataUnsafe.user.id;
-              const data = await getModeratorChat(initData, userId);
-              console.log('Received chats:', data);
-              
-              // Transform the response to match our Chat type
-              const transformedChats = (data as ModeratorChatResponse).chats.map((chat) => ({
-                id: chat.chat_id,
-                title: chat.name,
-                type: chat.type.toLowerCase()
-              }));
-              
-              setChats(transformedChats);
-              setIsLoading(false);
-            } else {
-              setError('User ID not available');
-              setIsLoading(false);
-            }
+            // First get current user info
+            const userInfo = await getCurrentUserInfo(initData);
+            console.log('User info:', userInfo);
+            
+            // Then get the user's moderated chats
+            const chatsData = await getChatsModeratedByUser(initData);
+            console.log('Received chats:', chatsData);
+            
+            // Transform the response to match our Chat type
+            const transformedChats = chatsData.map((chat: any) => ({
+              id: chat.chat_id,
+              title: chat.name,
+              type: chat.type.toLowerCase()
+            }));
+            
+            setChats(transformedChats);
+            setIsLoading(false);
           } catch (err) {
-            console.error('Failed to load chats:', err)
-            setError('Failed to load chats')
+            console.error('Failed to load user data or chats:', err)
+            setError('Failed to load your chat data')
             setIsLoading(false)
           }
         }
-        loadChats()
+        
+        loadUserAndChats()
       } catch (err) {
         console.error('Initialization error:', err)
         setError('Failed to initialize the app')

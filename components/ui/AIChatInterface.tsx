@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageSquare, Loader2 } from 'lucide-react'
-import { aiQuery } from '@/lib/api'
 
 interface ChatMessage {
     role: 'user' | 'assistant';
@@ -38,10 +37,27 @@ export default function AIChatInterface({ chatId }: AIChatInterfaceProps) {
         throw new Error('Telegram Web App is not initialized');
       }
 
-      const response = await aiQuery(tg.initData, message, parseInt(chatId));
+      const response = await fetch('https://robomod.dablietech.club/api/ai/query', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${tg.initData}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: message,
+          chat_id: parseInt(chatId)
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to get AI response');
+      }
+
+      const data = await response.json();
       const assistantMessage: ChatMessage = { 
         role: 'assistant', 
-        content: response.answer || "I'm sorry, I couldn't process your request at this time."
+        content: data.answer || "I'm sorry, I couldn't process your request at this time."
       };
       setHistory(prev => [...prev, assistantMessage]);
     } catch (e) {
