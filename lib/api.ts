@@ -1,3 +1,5 @@
+import type { GamificationSettings as GamificationSettingsType, Badge, Challenge, Reward } from '@/types/gamification'
+
 export async function getModeratorChat(initDataString: string, moderatorUserId: number) {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/get_moderator_chat?moderator_user_id=${moderatorUserId}`, {
@@ -297,7 +299,7 @@ interface GamificationSettings {
   };
   badge_settings: {
     badges_enabled: boolean;
-    badge_list: any[];
+    badge_list: Badge[];
   };
   leaderboard_settings: {
     leaderboard_types: string[];
@@ -305,11 +307,11 @@ interface GamificationSettings {
   };
   challenge_settings: {
     challenges_enabled: boolean;
-    challenge_list: any[];
+    challenge_list: Challenge[];
   };
   reward_settings: {
     rewards_enabled: boolean;
-    reward_list: any[];
+    reward_list: Reward[];
   };
 }
 
@@ -328,7 +330,7 @@ interface ModerationSettings {
   flood_restrict_duration: number;
 }
 
-export async function getGamificationSettings(initDataString: string, chatId: number, userId: number) {
+export async function getGamificationSettings(initDataString: string, chatId: number, userId: number): Promise<GamificationSettings> {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/chats/${chatId}/gamification/settings?user_id=${userId}`, {
       headers: {
@@ -348,7 +350,7 @@ export async function getGamificationSettings(initDataString: string, chatId: nu
   }
 }
 
-export async function updateGamificationSettings(initDataString: string, chatId: number, userId: number, settings: GamificationSettings) {
+export async function updateGamificationSettings(initDataString: string, chatId: number, userId: number, settings: GamificationSettings): Promise<GamificationSettings> {
   try {
     const response = await fetch(`https://robomod.dablietech.club/api/chats/${chatId}/gamification/settings?user_id=${userId}`, {
       method: 'POST',
@@ -428,158 +430,6 @@ export async function getUserWarnings(initDataString: string, chatId: number, us
     return await response.json();
   } catch (error) {
     console.error('Error fetching user warnings:', error);
-    throw error;
-  }
-}
-
-export async function getScheduledMessages(initDataString: string, chatId: number) {
-  try {
-    const response = await fetch(`https://robomod.dablietech.club/api/scheduled_messages?chat_id=${chatId}`, {
-      headers: {
-        'Authorization': `Bearer ${initDataString}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching scheduled messages:', error);
-    throw error;
-  }
-}
-
-export async function addScheduledMessage(initDataString: string, chatId: number, startingAt: number, interval: number, messageText?: string, media?: File) {
-  try {
-    const formData = new FormData();
-    if (messageText) formData.append('message_text', messageText);
-    if (media) formData.append('media', media);
-    
-    const response = await fetch(`https://robomod.dablietech.club/api/add_scheduled_message?chat_id=${chatId}&starting_at=${startingAt}&interval=${interval}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${initDataString}`,
-      },
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error adding scheduled message:', error);
-    throw error;
-  }
-}
-
-export async function editScheduledMessage(
-  initDataString: string, 
-  chatId: number, 
-  scheduleId: string, 
-  params: {
-    enabled?: boolean, 
-    startingAt?: number, 
-    interval?: number, 
-    messageText?: string, 
-    media?: File
-  }
-) {
-  try {
-    const formData = new FormData();
-    if (params.messageText !== undefined) formData.append('message_text', params.messageText);
-    if (params.media) formData.append('media', params.media);
-    
-    let url = `https://robomod.dablietech.club/api/edit_scheduled_message?chat_id=${chatId}&schedule_id=${scheduleId}`;
-    if (params.enabled !== undefined) url += `&enabled=${params.enabled}`;
-    if (params.startingAt !== undefined) url += `&starting_at=${params.startingAt}`;
-    if (params.interval !== undefined) url += `&interval=${params.interval}`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${initDataString}`,
-      },
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error editing scheduled message:', error);
-    throw error;
-  }
-}
-
-export async function deleteScheduledMessage(initDataString: string, chatId: number, scheduleId: string) {
-  try {
-    const response = await fetch(`https://robomod.dablietech.club/api/delete_scheduled_message?chat_id=${chatId}&schedule_id=${scheduleId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${initDataString}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error deleting scheduled message:', error);
-    throw error;
-  }
-}
-
-export async function getMessage(initDataString: string, chatId: number, messageId: number) {
-  try {
-    const response = await fetch(`https://robomod.dablietech.club/api/message?chat_id=${chatId}&message_id=${messageId}`, {
-      headers: {
-        'Authorization': `Bearer ${initDataString}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching message:', error);
-    throw error;
-  }
-}
-
-export async function aiQuery(initDataString: string, query: string, chatId?: number) {
-  try {
-    const payload: { query: string; chat_id?: number } = { query };
-    if (chatId !== undefined) payload.chat_id = chatId;
-    
-    const response = await fetch('https://robomod.dablietech.club/api/ai/query', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${initDataString}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error with AI query:', error);
     throw error;
   }
 }

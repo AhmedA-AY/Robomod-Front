@@ -18,9 +18,18 @@ export interface LevelSettings {
   base_points_per_level: number;
 }
 
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  icon_url: string;
+  points_required: number;
+  category: string;
+}
+
 export interface BadgeSettings {
   badges_enabled: boolean;
-  badge_list: any[]; // You might want to define a more specific type for badges
+  badge_list: Badge[];
 }
 
 export interface LeaderboardSettings {
@@ -28,14 +37,38 @@ export interface LeaderboardSettings {
   reset_times: Record<string, string>;
 }
 
+export interface Challenge {
+  id: number;
+  name: string;
+  description: string;
+  points: number;
+  start_date: string;
+  end_date: string;
+  requirements: {
+    type: string;
+    target: number;
+  }[];
+}
+
 export interface ChallengeSettings {
   challenges_enabled: boolean;
-  challenge_list: any[]; // You might want to define a more specific type for challenges
+  challenge_list: Challenge[];
+}
+
+export interface Reward {
+  id: number;
+  name: string;
+  description: string;
+  points_cost: number;
+  type: string;
+  value: string;
+  stock?: number;
+  expiry_date?: string;
 }
 
 export interface RewardSettings {
   rewards_enabled: boolean;
-  reward_list: any[]; // You might want to define a more specific type for rewards
+  reward_list: Reward[];
 }
 
 export interface GamificationSettings {
